@@ -1473,16 +1473,16 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return new ButtonLabelStyle(fontDef, align, color, border);
 	}
 	
-	public function checkVariable(key:String, otherValue:String, type:String, operator:String = "==", recursive:Bool = true):Bool
+	public function checkVariable(key:String, otherValue:String, type:String, operator_:String = "==", recursive:Bool = true):Bool
 	{
 		var variable:String = getVariable(key, recursive);
 		if (variable != null)
 		{
-			return U.compareStringVars(variable, otherValue, type, operator);
+			return U.compareStringVars(variable, otherValue, type, operator_);
 		}
 		else 
 		{
-			return U.compareStringVars("", otherValue, type, operator);
+			return U.compareStringVars("", otherValue, type, operator_);
 		}
 	}
 	
@@ -3413,7 +3413,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 			var varData = parseVarValue(variable);
 			if (varData != null)
 			{
-				match = checkVariable(varData.variable, varData.value, variableType, varData.operator);
+				match = checkVariable(varData.variable, varData.value, variableType, varData.operator_);
 			}
 			if (match != matchValue) {
 				return false;
@@ -3454,7 +3454,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 				temp = varString.split(op);
 				if (temp != null && temp.length == 2)
 				{
-					return { variable:temp[0], value:temp[1], operator:op };
+					return { variable:temp[0], value:temp[1], operator_:op };
 				}
 			}
 		}
@@ -5071,7 +5071,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		var list:Array<String> = ["+", "-", "*", "/", "^"];
 		var temp:Array<String> = null;
 		
-		var operator:String = "";
+		var operator_:String = "";
 		var besti:Float = Math.POSITIVE_INFINITY;
 		
 		for (op in list)
@@ -5082,18 +5082,18 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 				if (i < besti)
 				{
 					besti = i;
-					operator = op;
+					operator_ = op;
 				}
 			}
 		}
 		
 		var hasPoint:Bool = false;
 		
-		if (operator != "")
+		if (operator_ != "")
 		{
-			if (str.indexOf(operator) != -1)		//return on the FIRST valid operator match found
+			if (str.indexOf(operator_) != -1)		//return on the FIRST valid operator match found
 			{
-				var opindex = str.indexOf(operator);
+				var opindex = str.indexOf(operator_);
 				
 				if (opindex != str.length - 1)
 				{
@@ -5125,7 +5125,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 					}
 					else
 					{
-						return new Operation(firstBit, Operation.getOperatorTypeFromString(operator), f, hasPoint); //proper operand and operator
+						return new Operation(firstBit, Operation.getOperatorTypeFromString(operator_), f, hasPoint); //proper operand and operator
 					}
 				}
 			}
@@ -5134,9 +5134,9 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return null;
 	}
 	
-	private function _doOperation(value:Float, operator:OperatorType, operand:Float):Float
+	private function _doOperation(value:Float, operator_:OperatorType, operand:Float):Float
 	{
-		switch(operator)
+		switch(operator_)
 		{
 			case OperatorType.Plus: return value + operand;
 			case OperatorType.Minus: return value - operand;
@@ -5150,7 +5150,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 	
 	private function _getStretch(index:Int, target:String, str:String):Float
 	{
-		var operator:OperatorType = OperatorType.Plus;
+		var operator_:OperatorType = OperatorType.Plus;
 		var operand:Float = 0;
 		var hasPoint = false;
 		
@@ -5159,7 +5159,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		if (operation != null)
 		{
 			str = operation.object;
-			operator = operation.operator;
+			operator_ = operation.operator_;
 			operand = operation.operand;
 			hasPoint = operation.hasPoint;
 			
@@ -5177,9 +5177,9 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		
 		var return_val:Float = getAssetProperty(index, target, str);
 		
-		if (return_val != -1 && operator != OperatorType.Unknown)
+		if (return_val != -1 && operator_ != OperatorType.Unknown)
 		{
-			return_val = _doOperation(return_val, operator, operand);
+			return_val = _doOperation(return_val, operator_, operand);
 		}
 		
 		return return_val;
@@ -5817,21 +5817,21 @@ typedef MaxMinSize = {
 typedef VarValue = {
 	variable:String,
 	value:String,
-	operator:String
+	operator_:String
 }
 
 @:noCompletion
 class Operation 
 {
 	public var object:String;
-	public var operator:OperatorType;
+	public var operator_:OperatorType;
 	public var operand:Float;
 	public var hasPoint:Bool;
 	
 	public function new(Object:String, Operator:OperatorType, Operand:Float, HasPoint:Bool)
 	{
 		object = Object;
-		operator = Operator;
+		operator_ = Operator;
 		operand = Operand;
 		hasPoint = HasPoint;
 	}
