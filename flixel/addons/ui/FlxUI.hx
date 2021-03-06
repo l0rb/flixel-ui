@@ -4263,7 +4263,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return f9s;
 	}
 	
-	function load9SliceSprite_scaleSub(slice9:Array<Int>,data:Fast,src:String,srcString:String="src"):Array<Int>
+	public function load9SliceSprite_scaleSub(slice9:Array<Int>,data:Fast,src:String,srcString:String="src"):Array<Int>
 	{
 		//Figure out what effective scale we are using for the scaled source material
 		var origSrc = U.xml_gfx(data.x, srcString);
