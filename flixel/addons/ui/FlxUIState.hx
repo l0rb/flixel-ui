@@ -21,13 +21,12 @@ import openfl.events.Event;
  * 2) Automatically creates a FlxUI objects from a single string id
  * 
  * Usage:
-	 * Create a class that extends FlxUIState, override create, and 
-	 * before you call super.create(), set _xml_id to the string id
-	 * of the corresponding UI xml file (leave off the extension).
+ 	 * Create a class that extends FlxUIState, override create, and 
+ 	 * before you call super.create(), set _xml_id to the string id
+ 	 * of the corresponding UI xml file (leave off the extension).
  * 
  * @author Lars Doucet
  */
-
 #if flixel_addons
 class FlxUIState extends FlxTransitionableState implements IEventGetter implements IFlxUIState
 #else
@@ -35,120 +34,113 @@ class FlxUIState extends FlxState implements IEventGetter implements IFlxUIState
 #end
 {
 	public var destroyed:Bool;
-	
 	public var cursor:FlxUICursor = null;
 	#if !FLX_NO_MOUSE
 	public var hideCursorOnSubstate:Bool = false;
 	private var _cursorHidden:Bool = false;
 	#end
-	
 	/**
 	 * frontend for adding tooltips to things
 	 */
-	public var tooltips(default,null):FlxUITooltipManager;
-	
-	private var _xml_id:String = "";			//the xml file to load from assets
-	
+	public var tooltips(default, null):FlxUITooltipManager;
+	private var _xml_id:String = ""; // the xml file to load from assets
 	#if (debug && sys)
-		//If you want to do live reloading, set the path to your assets directory on your local disk here, 
-		//and it will load that instead of loading the xml specification from embedded assets
-		//(only works on cpp/neko targets)
-		//this should serve as a PREFIX to the _xml_id:
-		//if full path="path/to/assets/xml/ui/foo.xml" and _xml_id="ui/foo.xml", then liveFilePath="path/to/assets/xml/"
-		private var _liveFilePath:String = "";
+	// If you want to do live reloading, set the path to your assets directory on your local disk here,
+	// and it will load that instead of loading the xml specification from embedded assets
+	// (only works on cpp/neko targets)
+	// this should serve as a PREFIX to the _xml_id:
+	// if full path="path/to/assets/xml/ui/foo.xml" and _xml_id="ui/foo.xml", then liveFilePath="path/to/assets/xml/"
+	private var _liveFilePath:String = "";
 	#end
-	private var _makeCursor:Bool;		//whether to auto-construct a cursor and load default widgets into it
-	
-	private var _ui_vars:Map<String,String>;
+	private var _makeCursor:Bool; // whether to auto-construct a cursor and load default widgets into it
+	private var _ui_vars:Map<String, String>;
 	private var _ui:FlxUI;
 	private var _tongue:IFireTongue;
-	
-	public static var static_tongue:IFireTongue=null;
-	//if this is not null, each state will grab this auto-magically
-	//otherwise it's up to you to set _tongue before the UI stuff loads.
-	
+	public static var static_tongue:IFireTongue = null;
+	// if this is not null, each state will grab this auto-magically
+	// otherwise it's up to you to set _tongue before the UI stuff loads.
 	#if (debug && sys)
-		public static var static_liveFilePath:String = "";
-		//if this is not "", each state will grab this auto-magically
-		//otherwise it's up to you to set _liveFilePath before the UI stuff loads.
+	public static var static_liveFilePath:String = "";
+	// if this is not "", each state will grab this auto-magically
+	// otherwise it's up to you to set _liveFilePath before the UI stuff loads.
 	#end
-	
 	#if (debug && sys)
-		public var reload_ui_on_asset_change(default, set):Bool;
-		// setting this to true will add a listener to reload the UI when assets are updated ("openfl update <proj> <target>" in OpenFL 2.0)
-		// cpp/neko only
+	public var reload_ui_on_asset_change(default, set):Bool;
+	// setting this to true will add a listener to reload the UI when assets are updated ("openfl update <proj> <target>" in OpenFL 2.0)
+	// cpp/neko only
 	#end
-	
-	//set this to true to make it automatically reload the UI when the window size changes
+	// set this to true to make it automatically reload the UI when the window size changes
 	public var reload_ui_on_resize:Bool = false;
-	
 	private var _reload:Bool = false;
 	private var _reload_countdown:Int = 0;
-	
 	public var getTextFallback:String->String->Bool->String = null;
-	
+
 	#if (debug && sys)
-		private function set_reload_ui_on_asset_change(b:Bool):Bool {
-			// whether or not to reload UI when assets are updated
-			if (b) Assets.addEventListener(Event.CHANGE, reloadUI);
-			else Assets.removeEventListener(Event.CHANGE, reloadUI);
-			return reload_ui_on_asset_change = b;
-		}
+	private function set_reload_ui_on_asset_change(b:Bool):Bool
+	{
+		// whether or not to reload UI when assets are updated
+		if (b)
+			Assets.addEventListener(Event.CHANGE, reloadUI);
+		else
+			Assets.removeEventListener(Event.CHANGE, reloadUI);
+		return reload_ui_on_asset_change = b;
+	}
 	#end
-	
-	public override function create():Void {
+
+	public override function create():Void
+	{
 		if (static_tongue != null)
 		{
 			_tongue = static_tongue;
 		}
-		
+
 		#if (debug && sys)
-			if (static_liveFilePath != null && static_liveFilePath != "")
-			{
-				_liveFilePath = static_liveFilePath;
-			}
+		if (static_liveFilePath != null && static_liveFilePath != "")
+		{
+			_liveFilePath = static_liveFilePath;
+		}
 		#end
-		
+
 		if (_makeCursor == true)
 		{
 			cursor = createCursor();
 		}
-		
+
 		tooltips = new FlxUITooltipManager(this);
-		
+
 		var liveFile:Fast = null;
-		
+
 		#if (debug && sys)
-			if (_liveFilePath != null && _liveFilePath != "")
+		if (_liveFilePath != null && _liveFilePath != "")
+		{
+			try
 			{
-				try
-				{
-					liveFile = U.readFast(U.fixSlash(_liveFilePath + _xml_id));
-					trace("liveFile = " + liveFile);
-				}
-				catch(msg:String)
-				{
-					FlxG.log.warn(msg);
-					trace(msg);
-					liveFile = null;
-				}
+				liveFile = U.readFast(U.fixSlash(_liveFilePath + _xml_id));
+				trace("liveFile = " + liveFile);
 			}
-			_ui = createUI(null, this, null, _tongue, _liveFilePath);
+			catch (msg:String)
+			{
+				FlxG.log.warn(msg);
+				trace(msg);
+				liveFile = null;
+			}
+		}
+		_ui = createUI(null, this, null, _tongue, _liveFilePath);
 		#else
-			_ui = createUI(null, this, null, _tongue);
+		_ui = createUI(null, this, null, _tongue);
 		#end
 		add(_ui);
-		
+
 		if (getTextFallback != null)
 		{
 			_ui.getTextFallback = getTextFallback;
 		}
-		
+
 		if (_xml_id != null && _xml_id != "")
 		{
 			var data:Fast = null;
 			var errorMsg:String = "";
-			
+
 			if (liveFile == null)
 			{
 				try
@@ -163,7 +155,7 @@ class FlxUIState extends FlxState implements IEventGetter implements IFlxUIState
 				{
 					try
 					{
-						data = U.xml(_xml_id, "xml", true, "");	//try again without default directory prepend
+						data = U.xml(_xml_id, "xml", true, ""); // try again without default directory prepend
 					}
 					catch (msg2:Dynamic)
 					{
@@ -171,7 +163,7 @@ class FlxUIState extends FlxState implements IEventGetter implements IFlxUIState
 					}
 				}
 			}
-			
+
 			if (data == null)
 			{
 				if (liveFile != null)
@@ -192,24 +184,24 @@ class FlxUIState extends FlxState implements IEventGetter implements IFlxUIState
 		{
 			loadUIFromData(null);
 		}
-		
-		if (cursor != null && _ui != null)			//Cursor goes on top, of course
+
+		if (cursor != null && _ui != null) // Cursor goes on top, of course
 		{
 			add(cursor);
 			cursor.addWidgetsFromUI(_ui);
 			cursor.findVisibleLocation(0);
 		}
-		
+
 		tooltips.init();
-		
+
 		super.create();
-		
+
 		cleanup();
-		
+
 		FlxUI.event("finish_create", _ui, null);
 	}
-	
-	override public function update(elapsed:Float):Void 
+
+	override public function update(elapsed:Float):Void
 	{
 		super.update(elapsed);
 		if (tooltips != null)
@@ -217,56 +209,58 @@ class FlxUIState extends FlxState implements IEventGetter implements IFlxUIState
 			tooltips.update(elapsed);
 		}
 	}
-	
+
 	@:access(flixel.addons.ui.FlxUI)
 	private function cleanup():Void
 	{
-		//Clean up intermediate cached graphics that are no longer necessary
+		// Clean up intermediate cached graphics that are no longer necessary
 		_ui.cleanup();
 	}
-	
-	private static function _cleanupUIVars(vars:Map<String,String>):Map<String,String>
+
+	private static function _cleanupUIVars(vars:Map<String, String>):Map<String, String>
 	{
 		if (vars != null)
 		{
 			for (key in vars.keys())
-			{ 
+			{
 				vars.remove(key);
 			}
 			vars = null;
 		}
 		return null;
 	}
-	
+
 	public function setUIVariable(key:String, value:String):Void
 	{
 		_setUIVariable(this, key, value);
 	}
-	
+
 	@:access(flixel.addons.ui.IFlxUIState)
 	private static function _setUIVariable(state:IFlxUIState, key:String, value:String):Void
 	{
 		if (state._ui != null)
 		{
-			//if the UI is constructed, set the variable directly
+			// if the UI is constructed, set the variable directly
 			state._ui.setVariable(key, value);
 		}
 		else
 		{
-			//if not, store it locally until the UI is constructed, then pass it in as it's being created
-			if (state._ui_vars == null) state._ui_vars = new Map <String, String>();
+			// if not, store it locally until the UI is constructed, then pass it in as it's being created
+			if (state._ui_vars == null)
+				state._ui_vars = new Map<String, String>();
 			state._ui_vars.set(key, value);
 		}
 	}
-	
-	public function resizeScreen(width:Float=800, height:Float=600):Void {
+
+	public function resizeScreen(width:Float = 800, height:Float = 600):Void
+	{
 		/*#if sys
-			//TODO: reimplement with next OpenFL
-			FlxG.stage.resize(Std.int(width), Std.int(height));
-			onResize(Std.int(width), Std.int(height));
-		#end*/
+				//TODO: reimplement with next OpenFL
+				FlxG.stage.resize(Std.int(width), Std.int(height));
+				onResize(Std.int(width), Std.int(height));
+			#end */
 	}
-	
+
 	public override function openSubState(SubState:FlxSubState):Void
 	{
 		#if !FLX_NO_MOUSE
@@ -278,7 +272,7 @@ class FlxUIState extends FlxState implements IEventGetter implements IFlxUIState
 		#end
 		super.openSubState(SubState);
 	}
-	
+
 	public override function closeSubState():Void
 	{
 		#if !FLX_NO_MOUSE
@@ -290,83 +284,92 @@ class FlxUIState extends FlxState implements IEventGetter implements IFlxUIState
 		#end
 		super.closeSubState();
 	}
-	
-	public override function onResize(Width:Int, Height:Int):Void {
-		FlxG.resizeGame(Width, Height);	
+
+	public override function onResize(Width:Int, Height:Int):Void
+	{
+		FlxG.resizeGame(Width, Height);
 		_reload_countdown = 1;
 		_reload = true;
 	}
-	
+
 	public function onShowTooltip(t:FlxUITooltip):Void
 	{
-		//override per subclass
+		// override per subclass
 	}
-	
-	public override function destroy():Void {
+
+	public override function destroy():Void
+	{
 		destroyed = true;
 
-		if(_ui != null){
+		if (_ui != null)
+		{
 			_ui.destroy();
 			remove(_ui, true);
 			_ui = null;
 		}
-		
+
 		if (tooltips != null)
 		{
 			tooltips.destroy();
 			tooltips = null;
 		}
-		
+
 		#if !FLX_NO_MOUSE
 		cursor = null;
 		#end
-		
+
 		_ui_vars = _cleanupUIVars(_ui_vars);
 		_ui = null;
 		_tongue = null;
 		getTextFallback = null;
-		
+
 		super.destroy();
 	}
-		
-	public function forceFocus(b:Bool, thing:IFlxUIWidget):Void {
-		if (_ui != null) 
+
+	public function forceFocus(b:Bool, thing:IFlxUIWidget):Void
+	{
+		if (_ui != null)
 		{
-			if (b) 
+			if (b)
 			{
 				_ui.focus = thing;
 			}
-			else 
+			else
 			{
 				_ui.focus = null;
 			}
 		}
 	}
-	
-	public function onCursorEvent(code:String, target:IFlxUIWidget):Void 
+
+	public function onCursorEvent(code:String, target:IFlxUIWidget):Void
 	{
 		getEvent(code, target, null);
 	}
-	
-	public function getEvent(id:String, sender:Dynamic, data:Dynamic, ?params:Array<Dynamic>):Void {
-		//define per subclass
+
+	public function getEvent(id:String, sender:Dynamic, data:Dynamic, ?params:Array<Dynamic>):Void
+	{
+		// define per subclass
 	}
-	
-	public function getRequest(id:String, sender:Dynamic, data:Dynamic, ?params:Array<Dynamic>):Dynamic {
-		//define per subclass
+
+	public function getRequest(id:String, sender:Dynamic, data:Dynamic, ?params:Array<Dynamic>):Dynamic
+	{
+		// define per subclass
 		return null;
 	}
-	
-	public function getText(Flag:String,Context:String="ui",Safe:Bool=true):String{
-		if (_tongue != null) {
+
+	public function getText(Flag:String, Context:String = "ui", Safe:Bool = true):String
+	{
+		if (_tongue != null)
+		{
 			return _tongue.get(Flag, Context, Safe);
 		}
-		if (getTextFallback != null){
+		if (getTextFallback != null)
+		{
 			return getTextFallback(Flag, Context, Safe);
 		}
 		return Flag;
 	}
-	
+
 	/**
 	 * Creates a cursor. Makes it easy to override this function in your own FlxUIState.
 	 * @return
@@ -375,41 +378,42 @@ class FlxUIState extends FlxState implements IEventGetter implements IFlxUIState
 	{
 		return new FlxUICursor(onCursorEvent);
 	}
-	
-	//this makes it easy to override this function in your own FlxUIState,
-	//in case you want to instantiate a custom class that extends FlxUI instead
-	private function createUI(data:Fast = null, ptr:IEventGetter = null, superIndex_:FlxUI = null, tongue_:IFireTongue = null, liveFilePath_:String=""):FlxUI
+
+	// this makes it easy to override this function in your own FlxUIState,
+	// in case you want to instantiate a custom class that extends FlxUI instead
+	private function createUI(data:Fast = null, ptr:IEventGetter = null, superIndex_:FlxUI = null, tongue_:IFireTongue = null, liveFilePath_:String = ""):FlxUI
 	{
 		var flxui = new FlxUI(data, ptr, superIndex_, tongue_, liveFilePath_, _ui_vars);
-		_ui_vars = _cleanupUIVars(_ui_vars);	//clear out temporary _ui_vars variable if it was set
+		_ui_vars = _cleanupUIVars(_ui_vars); // clear out temporary _ui_vars variable if it was set
 		return flxui;
 	}
-	
-	//this makes it easy to override this function in your own FlxUIState,
-	//in case you want to operate on data before it is loaded
+
+	// this makes it easy to override this function in your own FlxUIState,
+	// in case you want to operate on data before it is loaded
 	private function loadUIFromData(data:Fast):Void
 	{
 		_ui.load(data);
 	}
-	
-	private function reloadUI(?e:Event):Void {
-		if (_ui != null) {
+
+	private function reloadUI(?e:Event):Void
+	{
+		if (_ui != null)
+		{
 			remove(_ui, true);
 			_ui.destroy();
 			_ui = null;
 		}
-		
-		_ui = createUI(null,this,null,_tongue);
+
+		_ui = createUI(null, this, null, _tongue);
 		add(_ui);
-				
+
 		var data:Fast = U.xml(_xml_id);
 		if (data != null)
 		{
 			loadUIFromData(data);
 		}
-		
+
 		_reload = false;
 		_reload_countdown = 0;
 	}
-	
 }

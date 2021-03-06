@@ -34,15 +34,15 @@ import flixel.addons.ui.FlxUITypedButton.FlxUIButtonType;
 class FlxUIButton extends FlxUITypedButton<FlxUIText> implements ILabeled implements IFlxUIButton
 {
 	private var _noIconGraphicsBkup:BitmapData;
-	
+
 	public var up_style:ButtonLabelStyle = null;
 	public var over_style:ButtonLabelStyle = null;
 	public var down_style:ButtonLabelStyle = null;
-	
+
 	public var up_toggle_style:ButtonLabelStyle = null;
 	public var over_toggle_style:ButtonLabelStyle = null;
 	public var down_toggle_style:ButtonLabelStyle = null;
-	
+
 	/**
 	 * Creates a new FlxUIButton.
 	 * 
@@ -54,30 +54,31 @@ class FlxUIButton extends FlxUITypedButton<FlxUIText> implements ILabeled implem
 	 * @param	LoadBlank	Load this button without ANY visible graphics, but still functions (in case you need an invisible click area)
 	 * @param	SkipResize	Skip the initial resize on construction (low-level optimization not recommended unless you know what you're doing)
 	 */
-	public function new(X:Float = 0, Y:Float = 0, ?Label:String, ?OnClick:Void->Void, ?LoadDefaultGraphics:Bool=true, ?LoadBlank:Bool=false, ?SkipResize:Bool=false)
+	public function new(X:Float = 0, Y:Float = 0, ?Label:String, ?OnClick:Void->Void, ?LoadDefaultGraphics:Bool = true, ?LoadBlank:Bool = false,
+			?SkipResize:Bool = false)
 	{
 		super(X, Y, OnClick);
-		
+
 		if (Label != null)
 		{
-			//create a FlxUIText label
-			label = new FlxUIText(0, 0, 80, "", 8);						//don't draw any text just yet b/c we're just going to resize & redraw it momentarily
+			// create a FlxUIText label
+			label = new FlxUIText(0, 0, 80, "", 8); // don't draw any text just yet b/c we're just going to resize & redraw it momentarily
 			label.setFormat(null, 8, 0x333333, FlxTextAlign.CENTER);
 		}
-		
+
 		if (LoadBlank)
 		{
 			_no_graphic = true;
 		}
-		
+
 		if (label != null)
 		{
-			label.text = Label; //apply the text now before the resize call
+			label.text = Label; // apply the text now before the resize call
 		}
-		
+
 		if (LoadDefaultGraphics)
 		{
-			resize(width, height);	//force it to be "FlxUI style"
+			resize(width, height); // force it to be "FlxUI style"
 		}
 		else
 		{
@@ -85,7 +86,7 @@ class FlxUIButton extends FlxUITypedButton<FlxUIText> implements ILabeled implem
 			{
 				var blank = FlxG.bitmap.create(1, 1, FlxColor.TRANSPARENT, false, "blank_flxui_button");
 				loadGraphic(blank);
-				
+
 				if (!SkipResize)
 				{
 					doResize(width, height, false);
@@ -94,9 +95,9 @@ class FlxUIButton extends FlxUITypedButton<FlxUIText> implements ILabeled implem
 				{
 					_setInitialLabelSize();
 				}
-				//initialize dimensions but don't initialize any graphics yet.
-				//this is ugly, but if you're about to set the graphics 
-				//yourself in a subsequent call it's much faster to skip!
+				// initialize dimensions but don't initialize any graphics yet.
+				// this is ugly, but if you're about to set the graphics
+				// yourself in a subsequent call it's much faster to skip!
 			}
 			else
 			{
@@ -110,10 +111,10 @@ class FlxUIButton extends FlxUITypedButton<FlxUIText> implements ILabeled implem
 				}
 			}
 		}
-		
+
 		uiButtonType = FlxUIButtonType.TEXT_BUTTON;
 	}
-	
+
 	@:access(flixel.addons.ui.FlxUIText)
 	private function _setInitialLabelSize()
 	{
@@ -127,7 +128,7 @@ class FlxUIButton extends FlxUITypedButton<FlxUIText> implements ILabeled implem
 			label._regen = regenValue;
 		}
 	}
-	
+
 	/**
 	 * You can use this if you have a lot of text parameters
 	 * to set instead of the individual properties.
@@ -141,24 +142,24 @@ class FlxUIButton extends FlxUITypedButton<FlxUIText> implements ILabeled implem
 	 * @param	EmbeddedFont	Whether this text field uses embedded fonts or not
 	 * @return	This FlxText instance (nice for chaining stuff together, if you're into that).
 	 */
-	public function setLabelFormat(?Font:String, Size:Int = 8, Color:FlxColor = FlxColor.WHITE, ?Alignment:FlxTextAlign,
-		?BorderStyle:FlxTextBorderStyle, BorderColor:FlxColor = FlxColor.TRANSPARENT, Embedded:Bool = true):FlxText
+	public function setLabelFormat(?Font:String, Size:Int = 8, Color:FlxColor = FlxColor.WHITE, ?Alignment:FlxTextAlign, ?BorderStyle:FlxTextBorderStyle,
+			BorderColor:FlxColor = FlxColor.TRANSPARENT, Embedded:Bool = true):FlxText
 	{
 		if (label != null)
 		{
 			label.setFormat(Font, Size, Color, Alignment, BorderStyle, BorderColor, Embedded);
 			#if flash
-				//A VERY NECESSARY HACK
-				//on Flash target, the height does not update for another frame, so autocentering will break
-				//HOWEVER! height is always equal to the truncated textHeight + 4 (there's a 2-pixel gutter on top & bottom)
-				//so we go ahead and set that right away for autocentering purposes:
-				label.height = Std.int(label.textField.textHeight) + 4;
+			// A VERY NECESSARY HACK
+			// on Flash target, the height does not update for another frame, so autocentering will break
+			// HOWEVER! height is always equal to the truncated textHeight + 4 (there's a 2-pixel gutter on top & bottom)
+			// so we go ahead and set that right away for autocentering purposes:
+			label.height = Std.int(label.textField.textHeight) + 4;
 			#end
 			return label;
 		}
 		return null;
 	}
-	
+
 	public override function clone():FlxUIButton
 	{
 		var newButton = new FlxUIButton(x, y, (label == null) ? null : label.text, onUp.callback, false, true);
@@ -167,124 +168,133 @@ class FlxUIButton extends FlxUITypedButton<FlxUIText> implements ILabeled implem
 		newButton.has_toggle = has_toggle;
 		return newButton;
 	}
-	
+
 	public override function copyStyle(other:FlxUITypedButton<FlxSprite>):Void
 	{
 		super.copyStyle(other);
 		if (Std.is(other, FlxUIButton))
 		{
 			var fuib:FlxUIButton = cast other;
-			
+
 			up_style = fuib.up_style;
 			over_style = fuib.over_style;
 			down_style = fuib.down_style;
-			
+
 			up_toggle_style = fuib.up_toggle_style;
 			over_toggle_style = fuib.over_toggle_style;
 			down_toggle_style = fuib.down_toggle_style;
-			
+
 			var t:FlxUIText = fuib.label;
-			
+
 			var tf:TextFormat = t.textField.defaultTextFormat;
-			
-			if (t.font.indexOf(FlxAssets.FONT_DEFAULT) == -1) 
+
+			if (t.font.indexOf(FlxAssets.FONT_DEFAULT) == -1)
 			{
 				var fd:FontDef = FontDef.copyFromFlxText(t);
 				fd.apply(label);
 			}
-			else 
+			else
 			{
 				var flxAlign = FlxTextAlign.fromOpenFL(tf.align);
-				
-				//put "null" for the default font
+
+				// put "null" for the default font
 				label.setFormat(null, Std.int(tf.size), tf.color, flxAlign, t.borderStyle, t.borderColor, t.embedded);
 			}
 		}
 	}
-	
+
 	/**For ILabeled:**/
-	
-	public function setLabel(t:FlxUIText):FlxUIText { label = t; return label;}
-	public function getLabel():FlxUIText { return label;}	
-	
+	public function setLabel(t:FlxUIText):FlxUIText
+	{
+		label = t;
+		return label;
+	}
+
+	public function getLabel():FlxUIText
+	{
+		return label;
+	}
+
 	/**For IResizable:**/
-	
 	public override function resize(W:Float, H:Float):Void
 	{
 		super.resize(W, H);
 	}
-	
-	public function addIcon(icon:FlxSprite,X:Int=0,Y:Int=0,?center:Bool=true)
+
+	public function addIcon(icon:FlxSprite, X:Int = 0, Y:Int = 0, ?center:Bool = true)
 	{
 		// Creates a backup of current button image.
 		_noIconGraphicsBkup = graphic.bitmap.clone();
-		
-		//create a new bitmap to avoid caching issues
+
+		// create a new bitmap to avoid caching issues
 		var newBmp = _noIconGraphicsBkup.clone();
-		
-		//create a unique key for the new graphic
+
+		// create a unique key for the new graphic
 		var key = graphic.key + ",icon:" + icon.graphic.key;
 		var newGraphic = FlxG.bitmap.add(newBmp, false, key);
-		
-		//load the new bitmap
+
+		// load the new bitmap
 		loadGraphic(newGraphic, true, Std.int(width), Std.int(height));
-		
+
 		var sx:Int = X;
 		var sy:Int = Y;
-		
-		if(center){
+
+		if (center)
+		{
 			sx = Std.int((width - icon.width) / 2);
 			sy = Std.int((height - icon.height) / 2);
 		}
-		
+
 		// Stamps the icon in every frame of this button.
 		for (i in 0...numFrames)
 		{
-			stamp(icon, sx + Std.int(labelOffsets[FlxMath.minInt(i, 2)].x), sy + Std.int(i * height) + Std.int(labelOffsets[FlxMath.minInt(i, 2)].y));
+			stamp(icon, sx
+				+ Std.int(labelOffsets[FlxMath.minInt(i, 2)].x), sy
+				+ Std.int(i * height)
+				+ Std.int(labelOffsets[FlxMath.minInt(i, 2)].y));
 		}
 	}
-	
+
 	public function removeIcon()
 	{
 		if (_noIconGraphicsBkup != null)
 		{
 			// Retreives the stored button image before icon was applied.
-			graphic.bitmap.fillRect(graphic.bitmap.rect, 0x0);					// clears the bitmap first.
+			graphic.bitmap.fillRect(graphic.bitmap.rect, 0x0); // clears the bitmap first.
 			graphic.bitmap.copyPixels(_noIconGraphicsBkup, new Rectangle(0, 0, _noIconGraphicsBkup.width, _noIconGraphicsBkup.height), new Point());
 			dirty = true;
-			
+
 			#if flash
 			calcFrame();
 			#end
 		}
 	}
-	
+
 	public function changeIcon(newIcon:FlxSprite)
 	{
 		removeIcon();
 		addIcon(newIcon);
 	}
-	
+
 	override public function destroy():Void
 	{
 		_noIconGraphicsBkup = FlxDestroyUtil.dispose(_noIconGraphicsBkup);
 		super.destroy();
 	}
-	
+
 	/**********PRIVATE*********/
-	
-	override function loadDefaultGraphic():Void 
+	override function loadDefaultGraphic():Void
 	{
-		//do nothing -- suppresses FlxTypedButton's default graphics loader
+		// do nothing -- suppresses FlxTypedButton's default graphics loader
 	}
-	
+
 	/**
 	 * Updates the size of the text field to match the button.
 	 */
 	override private function resetHelpers():Void
 	{
 		super.resetHelpers();
-		
+
 		if (label != null)
 		{
 			label.width = label.frameWidth = Std.int(width);
@@ -292,22 +302,28 @@ class FlxUIButton extends FlxUITypedButton<FlxUIText> implements ILabeled implem
 			label.size = label.size;
 		}
 	}
-	
+
 	override private function onDownHandler():Void
 	{
 		super.onDownHandler();
-		if (label != null) {
-			if (toggled && down_toggle_style != null) {
+		if (label != null)
+		{
+			if (toggled && down_toggle_style != null)
+			{
 				label.color = down_toggle_style.color;
-				if (down_toggle_style.border != null) {
+				if (down_toggle_style.border != null)
+				{
 					label.borderStyle = down_toggle_style.border.style;
 					label.borderColor = down_toggle_style.border.color;
 					label.borderSize = down_toggle_style.border.size;
 					label.borderQuality = down_toggle_style.border.quality;
 				}
-			}else if (!toggled && down_style != null) {
+			}
+			else if (!toggled && down_style != null)
+			{
 				label.color = down_style.color;
-				if(down_style.border != null){
+				if (down_style.border != null)
+				{
 					label.borderStyle = down_style.border.style;
 					label.borderColor = down_style.border.color;
 					label.borderSize = down_style.border.size;
@@ -316,22 +332,28 @@ class FlxUIButton extends FlxUITypedButton<FlxUIText> implements ILabeled implem
 			}
 		}
 	}
-	
+
 	override private function onOverHandler():Void
 	{
 		super.onOverHandler();
-		if (label != null) {
-			if (toggled && over_toggle_style != null) {
+		if (label != null)
+		{
+			if (toggled && over_toggle_style != null)
+			{
 				label.color = over_toggle_style.color;
-				if(over_toggle_style.border != null){
+				if (over_toggle_style.border != null)
+				{
 					label.borderStyle = over_toggle_style.border.style;
 					label.borderColor = over_toggle_style.border.color;
 					label.borderSize = over_toggle_style.border.size;
 					label.borderQuality = over_toggle_style.border.quality;
 				}
-			}else if (!toggled && over_style != null) {
+			}
+			else if (!toggled && over_style != null)
+			{
 				label.color = over_style.color;
-				if(over_style.border != null){
+				if (over_style.border != null)
+				{
 					label.borderStyle = over_style.border.style;
 					label.borderColor = over_style.border.color;
 					label.borderSize = over_style.border.size;
@@ -340,22 +362,28 @@ class FlxUIButton extends FlxUITypedButton<FlxUIText> implements ILabeled implem
 			}
 		}
 	}
-	
+
 	override private function onOutHandler():Void
 	{
 		super.onOutHandler();
-		if (label != null) {
-			if (toggled && up_toggle_style != null) {
+		if (label != null)
+		{
+			if (toggled && up_toggle_style != null)
+			{
 				label.color = up_toggle_style.color;
-				if(up_toggle_style.border != null){
+				if (up_toggle_style.border != null)
+				{
 					label.borderStyle = up_toggle_style.border.style;
 					label.borderColor = up_toggle_style.border.color;
 					label.borderSize = up_toggle_style.border.size;
 					label.borderQuality = up_toggle_style.border.quality;
 				}
-			}else if (!toggled && up_style != null) {
+			}
+			else if (!toggled && up_style != null)
+			{
 				label.color = up_style.color;
-				if(up_style.border != null){
+				if (up_style.border != null)
+				{
 					label.borderStyle = up_style.border.style;
 					label.borderColor = up_style.border.color;
 					label.borderSize = up_style.border.size;
@@ -364,22 +392,28 @@ class FlxUIButton extends FlxUITypedButton<FlxUIText> implements ILabeled implem
 			}
 		}
 	}
-	
+
 	override private function onUpHandler():Void
 	{
 		super.onUpHandler();
-		if (label != null) {
-			if (toggled && up_toggle_style != null) {
+		if (label != null)
+		{
+			if (toggled && up_toggle_style != null)
+			{
 				label.color = up_toggle_style.color;
-				if(up_toggle_style.border != null){
+				if (up_toggle_style.border != null)
+				{
 					label.borderStyle = up_toggle_style.border.style;
 					label.borderColor = up_toggle_style.border.color;
 					label.borderSize = up_toggle_style.border.size;
 					label.borderQuality = up_toggle_style.border.quality;
 				}
-			}else if (!toggled && up_style != null) {
+			}
+			else if (!toggled && up_style != null)
+			{
 				label.color = up_style.color;
-				if(up_style.border != null){
+				if (up_style.border != null)
+				{
 					label.borderStyle = up_style.border.style;
 					label.borderColor = up_style.border.color;
 					label.borderSize = up_style.border.size;

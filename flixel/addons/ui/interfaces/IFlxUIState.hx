@@ -10,7 +10,7 @@ interface IFlxUIState extends IEventGetter
 	public var tooltips(default, null):FlxUITooltipManager;
 	public var cursor:FlxUICursor;
 	public function setUIVariable(key:String, value:String):Void;
-	
+
 	private var _tongue:IFireTongue;
 	private var _ui:FlxUI;
 	private var _ui_vars:Map<String, String>;

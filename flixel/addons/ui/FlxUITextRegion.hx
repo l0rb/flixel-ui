@@ -1,4 +1,5 @@
 package flixel.addons.ui;
+
 import flixel.addons.ui.interfaces.IFlxUIText;
 import flixel.addons.ui.interfaces.IHasParams;
 import flixel.text.FlxBitmapText;
@@ -16,10 +17,10 @@ class FlxUITextRegion extends FlxUIRegion implements IHasParams implements IFlxU
 	public var params(default, set):Array<Dynamic>;
 	public var text(default, set):String;
 	public var size(default, set):Int;
-	public var bold(default,set):Bool = false;
-	public var italic(default,set):Bool = false;
-	public var alignment(default,set):FlxTextAlign;
-	
+	public var bold(default, set):Bool = false;
+	public var italic(default, set):Bool = false;
+	public var alignment(default, set):FlxTextAlign;
+
 	public function new(X:Float = 0, Y:Float = 0, FieldWidth:Float = 0, ?Text:String, Size:Int = 8, EmbeddedFont:Bool = true)
 	{
 		fieldWidth = FieldWidth;
@@ -31,73 +32,84 @@ class FlxUITextRegion extends FlxUIRegion implements IHasParams implements IFlxU
 		embedFonts = EmbeddedFont;
 		super(X, Y, W, H);
 	}
-	
+
 	public function copy()
 	{
 		var tr = new FlxUITextRegion(x, y, fieldWidth, text, size, embedFonts);
-		if (fontDef != null){
+		if (fontDef != null)
+		{
 			tr.fontDef = fontDef.clone();
 		}
-		else {
+		else
+		{
 			tr.fontDef = null;
 		}
-		if (params != null) { 
+		if (params != null)
+		{
 			tr.params = params.copy();
-		}else {
+		}
+		else
+		{
 			tr.params = null;
 		}
 		tr.bold = bold;
 		tr.italic = italic;
 		tr.alignment = alignment;
 		return tr;
-		
 	}
-	
-	override public function resize(w:Float, h:Float):Void 
+
+	override public function resize(w:Float, h:Float):Void
 	{
-		if (w < 8) w = 8;
-		if (h < 8) h = 8;
+		if (w < 8)
+			w = 8;
+		if (h < 8)
+			h = 8;
 		super.resize(w, h);
 		size = Std.int(h - 4);
-		if (size < 0) size = 1;
+		if (size < 0)
+			size = 1;
 	}
-	
+
 	public function createFlxUIText():FlxUIText
 	{
 		var t:FlxUIText = new FlxUIText(x, y, fieldWidth, text, size, embedFonts);
 		fontDef.applyFlx(t);
 		return t;
 	}
-	
+
 	private function set_bold(b:Bool):Bool
 	{
 		bold = b;
 		updateStyle();
 		return bold;
 	}
-	
+
 	private function set_italic(b:Bool):Bool
 	{
 		italic = b;
 		updateStyle();
 		return italic;
 	}
-	
+
 	private function updateStyle()
 	{
-		if (bold && italic) fontDef.setFontStyle("z");
-		else if (bold) fontDef.setFontStyle("b");
-		else if (italic) fontDef.setFontStyle("i");
-		else fontDef.setFontStyle("");
+		if (bold && italic)
+			fontDef.setFontStyle("z");
+		else if (bold)
+			fontDef.setFontStyle("b");
+		else if (italic)
+			fontDef.setFontStyle("i");
+		else
+			fontDef.setFontStyle("");
 	}
-	
+
 	private function set_alignment(align:FlxTextAlign):FlxTextAlign
 	{
 		alignment = align;
 		fontDef.format.align = FlxTextAlign.toOpenFL(align);
 		return alignment;
 	}
-	
+
 	private function set_size(s:Int):Int
 	{
 		size = s;
@@ -105,21 +117,21 @@ class FlxUITextRegion extends FlxUIRegion implements IHasParams implements IFlxU
 		fontDef.size = s;
 		return s;
 	}
-	
+
 	private function set_text(t:String):String
 	{
 		text = t;
 		return t;
 	}
-	
+
 	private function set_fieldWidth(w:Float):Float
 	{
 		fieldWidth = w;
 		width = fieldWidth;
 		return fieldWidth;
 	}
-	
-	private function set_params(p:Array <Dynamic>):Array<Dynamic>
+
+	private function set_params(p:Array<Dynamic>):Array<Dynamic>
 	{
 		params = p;
 		return p;
