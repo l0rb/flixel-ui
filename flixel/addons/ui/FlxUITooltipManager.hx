@@ -520,7 +520,7 @@ class FlxUITooltipManager implements IFlxDestroyable
 		if (list == null)
 			return -1;
 
-		// Fast path: look for the thing itself
+		// Access path: look for the thing itself
 		for (entry in list)
 		{
 			if (entry == null)
