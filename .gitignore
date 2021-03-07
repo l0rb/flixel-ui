@@ -3,3 +3,5 @@ psds/
 *.psd
 export/*
 flixel/addons/ui/FlxStateX.hx.orig
+*.swp
+docker-compose.yml
