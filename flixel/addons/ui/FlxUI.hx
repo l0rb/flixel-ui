@@ -40,9 +40,14 @@ import flixel.util.FlxArrayUtil;
 import flixel.util.FlxColor;
 import flixel.math.FlxPoint;
 import flixel.util.FlxStringUtil;
-import haxe.xml.Fast;
 import openfl.Assets;
 import openfl.text.TextFormat;
+
+#if haxe4
+import haxe.xml.Access;
+#else
+import haxe.xml.Fast as Access;
+#end
 
 /**
  * A simple xml-driven user interface
@@ -119,7 +124,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 	public var cursorLists(default, null):Array<Array<IFlxUIWidget>> = null;
 	
 	private var _ptr_tongue:IFireTongue;
-	private var _data:Fast;
+	private var _data:Access;
 	
 	/**
 	 * Make sure to recursively propogate the tongue pointer down to all my members
@@ -313,7 +318,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 	 * @param	uiVars_			(optional) Any variables you want to pre-load the UI with
 	 */
 	
-	public function new(data:Fast = null, ptr:IEventGetter = null, superIndex_:FlxUI = null, tongue_:IFireTongue = null, liveFilePath_:String="", uiVars_:Map<String,String>=null, loadThingCallback_:IFlxUIWidget->String->Void=null, postLoadThingCallback_:IFlxUIWidget->String->Void=null) 
+	public function new(data:Access = null, ptr:IEventGetter = null, superIndex_:FlxUI = null, tongue_:IFireTongue = null, liveFilePath_:String="", uiVars_:Map<String,String>=null, loadThingCallback_:IFlxUIWidget->String->Void=null, postLoadThingCallback_:IFlxUIWidget->String->Void=null) 
 	{
 		super();
 		_ptr_tongue = tongue_;	//set the localization data structure, if any.
@@ -626,23 +631,23 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 	}
 	
 	/**
-	 * Main setup function - pass in a Fast(xml) object 
+	 * Main setup function - pass in a Access(xml) object 
 	 * to set up your FlxUI
 	 * @param	data
 	 */
 	
 	@:access(Xml)
-	public function load(data:Fast):Void
+	public function load(data:Access):Void
 	{
 		_group_index = new Map<String,FlxUIGroup>();
 		_asset_index = new Map<String,IFlxUIWidget>();
 		_tag_index = new Map<String,Array<String>>();
-		_definition_index = new Map<String,Fast>();
+		_definition_index = new Map<String,Access>();
 		if (_variable_index == null)
 		{
 			_variable_index = new Map<String,String>();
 		}
-		_mode_index = new Map<String,Fast>();
+		_mode_index = new Map<String,Access>();
 		
 		if (data != null)
 		{
@@ -677,14 +682,14 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 				{
 					var inc_name:String = U.xml_name(inc_data.x);
 					
-					var liveFile:Fast = null;
+					var liveFile:Access = null;
 					
 					#if (debug && sys)
 						if (liveFilePath != null && liveFilePath != "")
 						{
 							try
 							{
-								liveFile = U.readFast(U.fixSlash(liveFilePath + inc_name + ".xml"));
+								liveFile = U.readAccess(U.fixSlash(liveFilePath + inc_name + ".xml"));
 							}
 							catch (msg:String)
 							{
@@ -694,7 +699,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 						}
 					#end
 					
-					var inc_xml:Fast = null;
+					var inc_xml:Access = null;
 					if (liveFile == null)
 					{
 						inc_xml = getXML(inc_name);
@@ -824,7 +829,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 				{
 					if (_loadTest(mode_data))
 					{
-						var mode_data2:Fast = applyNodeConditionals(mode_data);
+						var mode_data2:Access = applyNodeConditionals(mode_data);
 						var mode_name:String = U.xml_name(mode_data.x);
 						//mode_data
 						
@@ -889,7 +894,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 	}
 	
 	@:access(Xml)
-	private function resolveInjections(data:Fast):Fast
+	private function resolveInjections(data:Access):Access
 	{
 		if (data.hasNode.inject)
 		{
@@ -933,12 +938,12 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return data;
 	}
 	
-	private function unparentXML(f:Fast):Fast
+	private function unparentXML(f:Access):Access
 	{
 		return U.unparentXML(f);
 	}
 	
-	private function _loadPointSize(data:Fast):Void
+	private function _loadPointSize(data:Access):Void
 	{
 		var ptx = -1.0;
 		var pty = -1.0;
@@ -976,7 +981,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		var error:String = " ";
 		var type:String = node.nodeName;
 		type.toLowerCase();
-		var obj:Fast = new Fast(node);
+		var obj:Access = new Access(node);
 		
 		//if a "load_if" tag is wrapped around a block of other tags
 		//then do the load test, and if so, load all the children inside the block
@@ -1082,7 +1087,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		}
 	}
 
-	private function _loadGlobals(data:Fast, thing:Dynamic)
+	private function _loadGlobals(data:Access, thing:Dynamic)
 	{
 		if(Std.is(thing, FlxBasic))
 		{
@@ -1102,7 +1107,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		}
 	}
 	
-	private function _postLoad(data:Fast):Void
+	private function _postLoad(data:Access):Void
 	{
 		_postLoaded = true;
 		if (data.x.firstElement() != null) {
@@ -1110,7 +1115,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 			var node:Xml;
 			for (node in data.x.elements()) 
 			{
-				_postLoadThing(node.nodeName.toLowerCase(), new Fast(node));
+				_postLoadThing(node.nodeName.toLowerCase(), new Access(node));
 			}
 		}
 		
@@ -1207,7 +1212,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		{
 			return;					//no sense in setting the same mode twice!
 		}
-		var mode:Fast = getMode(mode_name);
+		var mode:Access = getMode(mode_name);
 		_curr_mode = mode_name;
 		var name:String = "";
 		var thing;
@@ -1217,7 +1222,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 				var xml:Xml;
 				for (node in mode.elements) {
 					
-					var node2:Fast = applyNodeConditionals(node);	//check for conditionals
+					var node2:Access = applyNodeConditionals(node);	//check for conditionals
 					xml = node2.x;
 					
 					var nodeName:String = xml.nodeName;
@@ -1440,9 +1445,9 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return null;
 	}
 	
-	public function getMode(key:String, recursive:Bool = true):Fast
+	public function getMode(key:String, recursive:Bool = true):Access
 	{
-		var mode:Fast = _mode_index.get(key);
+		var mode:Access = _mode_index.get(key);
 		if (mode == null && recursive && _superIndexUI != null)
 		{
 			return _superIndexUI.getMode(key, recursive);
@@ -1452,7 +1457,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 
 	public function getLabelStyleFromDefinition(key:String, recursive:Bool = true):ButtonLabelStyle
 	{
-		var definition:Fast = getDefinition(key, recursive);
+		var definition:Access = getDefinition(key, recursive);
 		if (definition != null)
 		{
 			var fontDef:FontDef = _loadFontDef(definition);
@@ -1464,7 +1469,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return null;
 	}
 	
-	public function getLabelStyleFromData(data:Fast):ButtonLabelStyle
+	public function getLabelStyleFromData(data:Access):ButtonLabelStyle
 	{
 		var fontDef:FontDef = _loadFontDef(data);
 		var align:String = U.xml_str(data.x, "align"); if (align == "") { align = null; }
@@ -1501,9 +1506,9 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return variable;
 	}
 	
-	public function getDefinition(key:String, recursive:Bool = true):Fast
+	public function getDefinition(key:String, recursive:Bool = true):Access
 	{
-		var definition:Fast = _definition_index.get(key);
+		var definition:Access = _definition_index.get(key);
 		if (definition == null && recursive && _superIndexUI != null)
 		{
 			definition = _superIndexUI.getDefinition(key, recursive);
@@ -1576,9 +1581,9 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 	private var _group_index:Map<String,FlxUIGroup>;
 	private var _asset_index:Map<String,IFlxUIWidget>;
 	private var _tag_index:Map<String,Array<String>>;
-	private var _definition_index:Map<String,Fast>;
+	private var _definition_index:Map<String,Access>;
 	private var _variable_index:Map<String,String>;
-	private var _mode_index:Map<String,Fast>;
+	private var _mode_index:Map<String,Access>;
 	
 	private var _curr_mode:String = "";
 	
@@ -1587,7 +1592,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 	private var _superIndexUI:FlxUI;
 	private var _safe_input_delay_elapsed:Float = 0.0;
 	
-	private var _failure_checks:Array<Fast>;
+	private var _failure_checks:Array<Access>;
 	
 	private var _assetsToCleanUp:Array<String>=[]; //assets to remove from the cache after the state is initialized
 	private var _scaledAssets:Array<String> = [];
@@ -1649,9 +1654,9 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 	
 	/************LOADING FUNCTIONS**************/
 	
-	private function applyNodeConditionals(info:Fast):Fast{
+	private function applyNodeConditionals(info:Access):Access{
 		if (info.hasNode.locale || info.hasNode.haxedef || info.hasNode.window || info.hasNode.change_if) {
-			info = U.copyFast(info);
+			info = U.copyAccess(info);
 			
 			if(info.hasNode.locale){
 				info = applyNodeChanges(info, "locale");
@@ -1678,11 +1683,11 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 	
 	/**
 	 * Make any necessary changes to data/definition xml objects (such as for locale or haxedef settings)
-	 * @param	data		Fast xml data
+	 * @param	data		Access xml data
 	 * @param	nodeName	name of the node, "locale", "haxedef", or "resolution"
 	 */
 	
-	private function applyNodeChanges(data:Fast,nodeName:String):Fast {
+	private function applyNodeChanges(data:Access,nodeName:String):Access {
 		//Make any necessary UI adjustments based on locale
 		
 		var nodeValue:String = "";
@@ -1761,12 +1766,12 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 	 * @return
 	 */
 	
-	public function loadThing(type:String, data:Fast):IFlxUIWidget
+	public function loadThing(type:String, data:Access):IFlxUIWidget
 	{
 		return _loadThing(type, data);
 	}
 	
-	private function _loadThingGetInfo(data:Fast):Fast
+	private function _loadThingGetInfo(data:Access):Access
 	{
 		var nodeName:String = data.x.nodeName;
 		var defaultDef = getDefinition("default:" + nodeName);
@@ -1774,7 +1779,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		//TODO: since it looks for the default definition based on the specific node-name, there could be bugs if you mix & match synonymous tags like <9slicesprite> and <chrome>,
 		//but only specify a default for one of them. I might need to add some robustness checking later.
 		
-		var info:Fast = null;
+		var info:Access = null;
 		if (defaultDef != null)
 		{
 			info = consolidateData(data, defaultDef, true);
@@ -1785,7 +1790,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 			info = data;
 		}
 		
-		var definition:Fast = getUseDef(info);
+		var definition:Access = getUseDef(info);
 		info = consolidateData(info, definition);
 		info = applyNodeConditionals(info);
 		
@@ -1797,7 +1802,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return info;
 	}
 	
-	private function _loadTooltip(thing:IFlxUIWidget, data:Fast):Void
+	private function _loadTooltip(thing:IFlxUIWidget, data:Access):Void
 	{
 		if (data.hasNode.tooltip)
 		{
@@ -1816,7 +1821,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		}
 	}
 	
-	private function _loadTooltipData(tNode:Fast):FlxUITooltipData
+	private function _loadTooltipData(tNode:Access):FlxUITooltipData
 	{
 		var tt = {
 			title:"", 
@@ -1880,7 +1885,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return tt;
 	}
 	
-	private function _loadTooltipStyle(node:Fast, tt:FlxUITooltipData):Void
+	private function _loadTooltipStyle(node:Access, tt:FlxUITooltipData):Void
 	{
 		tt.style.background  = U.xml_color(node.x, "background");
 		tt.style.borderSize  = U.xml_i(node.x, "border", -1);
@@ -1905,7 +1910,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		}
 	}
 	
-	private function _loadTooltipText(node:Fast, fieldName:String, tt:FlxUITooltipData):Void
+	private function _loadTooltipText(node:Access, fieldName:String, tt:FlxUITooltipData):Void
 	{
 		var nodeName = node.name;
 		var text     = _loadString(node, fieldName);
@@ -1950,7 +1955,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		}
 	}
 	
-	private function _loadAnchor(data:Fast):Anchor
+	private function _loadAnchor(data:Access):Anchor
 	{
 		var xOff = _loadX(data);
 		var yOff = _loadY(data);
@@ -1965,7 +1970,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return null;
 	}
 	
-	private function _loadThing(type:String, data:Fast):IFlxUIWidget{
+	private function _loadThing(type:String, data:Access):IFlxUIWidget{
 		
 		var info = _loadThingGetInfo(data);
 		if (info == null)
@@ -1998,7 +2003,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 			case "checkbox": returnThing =  _loadCheckBox(info);						//has events, params
 			case "radio_group": returnThing =  _loadRadioGroup(info);					//has events, params
 			case "layout", "ui": returnThing =  _loadLayout(info);
-			case "failure": if (_failure_checks == null) { _failure_checks = new Array<Fast>(); }
+			case "failure": if (_failure_checks == null) { _failure_checks = new Array<Access>(); }
 							unparentXML(info);
 							_failure_checks.push(info);
 							returnThing =  null;
@@ -2042,46 +2047,46 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 	}
 	
 	//Handy helpers for making x/y/w/h loading dynamic:
-	private inline function _loadX(data:Fast, default_:Float = 0):Float
+	private inline function _loadX(data:Access, default_:Float = 0):Float
 	{
 		return _loadWidth(data, default_, "x");
 	}
 	
-	private inline function _loadY(data:Fast, default_:Float = 0):Float
+	private inline function _loadY(data:Access, default_:Float = 0):Float
 	{
 		return _loadHeight(data, default_, "y");
 	}
 	
-	private function _loadScale(data:Fast, default_:Float = 1.0, str:String="scale"):Float
+	private function _loadScale(data:Access, default_:Float = 1.0, str:String="scale"):Float
 	{
 		return _loadHeight(data, default_, str, "none");
 	}
 	
-	private function _loadScaleX(data:Fast, default_:Float = 1.0):Float
+	private function _loadScaleX(data:Access, default_:Float = 1.0):Float
 	{
 		return _loadWidth(data, default_, "scale_x", "none");
 	}
 	
-	private function _loadScaleY(data:Fast, default_:Float = 1.0):Float
+	private function _loadScaleY(data:Access, default_:Float = 1.0):Float
 	{
 		return _loadHeight(data, default_, "scale_y", "none");
 	}
 	
-	private function _loadWidth(data:Fast, default_:Float = 10, str:String = "width", defaultRound:String = ""):Float
+	private function _loadWidth(data:Access, default_:Float = 10, str:String = "width", defaultRound:String = ""):Float
 	{
 		var ws:String = U.xml_str(data.x, str, true, Std.string(default_));
 		var round:Rounding = getRound(data, defaultRound);
 		return doRound(_getDataSize("w", ws, default_), round);
 	}
 	
-	private function _loadHeight(data:Fast, default_:Float = 10, str:String = "height", defaultRound:String = ""):Float
+	private function _loadHeight(data:Access, default_:Float = 10, str:String = "height", defaultRound:String = ""):Float
 	{
 		var hs:String = U.xml_str(data.x, str, true, Std.string(default_));
 		var round:Rounding = getRound(data, defaultRound);
 		return doRound(_getDataSize("h", hs, default_), round);
 	}
 	
-	private function _loadCompass(data:Fast, str:String = "resize_point"):FlxPoint
+	private function _loadCompass(data:Access, str:String = "resize_point"):FlxPoint
 	{
 		var cs:String = U.xml_str(data.x, str, true, "nw");
 		var fp:FlxPoint = FlxPoint.get();
@@ -2099,7 +2104,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return fp;
 	}
 	
-	private function _changeParamsThing(data:Fast):Void
+	private function _changeParamsThing(data:Access):Void
 	{
 		var name:String = U.xml_name(data.x);
 		var thing:IFlxUIWidget = getAsset(name);
@@ -2119,7 +2124,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		ihp.params = getParams(data);
 	}
 	
-	private function _changeThing(data:Fast):Void
+	private function _changeThing(data:Access):Void
 	{
 		var name:String = U.xml_name(data.x);
 		var thing = getAsset(name);
@@ -2195,7 +2200,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 	
 	
 	
-	private function _alignThing(data:Fast,suppressError:Bool=false):Void
+	private function _alignThing(data:Access,suppressError:Bool=false):Void
 	{
 		var datastr:String = data.x.toString();
 		if (data.hasNode.objects)
@@ -2406,7 +2411,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		}
 	}
 	
-	private function _checkFailure(data:Fast):Bool{
+	private function _checkFailure(data:Access):Bool{
 		var target:String = U.xml_str(data.x, "target", true);
 		var property:String = U.xml_str(data.x, "property", true);
 		var compare:String = U.xml_str(data.x, "compare", true);
@@ -2497,7 +2502,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		}
 	}
 	
-	private function _postLoadThing(type:String, data:Fast):Void
+	private function _postLoadThing(type:String, data:Access):Void
 	{
 		if (type == "load_if")		//if the whole thing is a load_if tag, evaluate & load all sub elements
 		{
@@ -2508,7 +2513,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 					for (subNode in data.x.elements())
 					{
 						var nodeType:String = subNode.nodeName.toLowerCase();
-						_postLoadThing(nodeType, new Fast(subNode));
+						_postLoadThing(nodeType, new Access(subNode));
 					}
 				}
 			}
@@ -2559,7 +2564,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		if (!isGroup)
 		{
 			var use_def:String = U.xml_str(data.x, "use_def", true);
-			var definition:Fast = null;
+			var definition:Access = null;
 			if (use_def != "") {
 				definition = getDefinition(use_def);
 			}
@@ -2625,7 +2630,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		}
 	}
 	
-	private function _loadTileTest(data:Fast):FlxUITileTest
+	private function _loadTileTest(data:Access):FlxUITileTest
 	{
 		var tiles_w:Int = U.xml_i(data.x, "tiles_w", 2);
 		var tiles_h:Int = U.xml_i(data.x, "tiles_h", 2);
@@ -2667,7 +2672,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return ftt;
 	}
 	
-	private function _loadString(data:Fast, attributeName:String):String
+	private function _loadString(data:Access, attributeName:String):String
 	{
 		var string = U.xml_str(data.x, attributeName);
 		var context = U.xml_str(data.x, "context", true, "ui");
@@ -2677,7 +2682,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 	}
 	
 	@:access(flixel.text.FlxText)
-	private function _loadText(data:Fast, asRegion:Bool=false):IFlxUIWidget
+	private function _loadText(data:Access, asRegion:Bool=false):IFlxUIWidget
 	{
 		var text:String = U.xml_str(data.x, "text");
 		var context:String = U.xml_str(data.x, "context", true, "ui");
@@ -2758,7 +2763,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return ft;
 	}
 
-	private function _loadInputText(data:Fast):IFlxUIWidget
+	private function _loadInputText(data:Access):IFlxUIWidget
 	{
 		var text:String = U.xml_str(data.x, "text");
 		var context:String = U.xml_str(data.x, "context", true, "ui");
@@ -2845,7 +2850,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 	 * @return
 	 */
 	
-	public static function consolidateData(data:Fast, definition:Fast, combineUniqueChildren:Bool=false):Fast
+	public static function consolidateData(data:Access, definition:Access, combineUniqueChildren:Bool=false):Access
 	{
 		if (data == null && definition != null)
 		{
@@ -2908,12 +2913,12 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 					new_data.insertChild(U.copyXml(element), 0);	//Add the node
 				}
 			}
-			return new Fast(new_data);
+			return new Access(new_data);
 		}
 		return data;
 	}
 	
-	private function _loadRadioGroup(data:Fast):FlxUIRadioGroup
+	private function _loadRadioGroup(data:Access):FlxUIRadioGroup
 	{
 		var frg:FlxUIRadioGroup = null;
 		
@@ -3062,7 +3067,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 					i++;
 					if (radioNode != null)
 					{
-						_loadTooltip(fc, new Fast(radioNode));
+						_loadTooltip(fc, new Access(radioNode));
 					}
 				}
 			}
@@ -3082,7 +3087,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return frg;
 	}
 	
-	private function _loadCheckBox(data:Fast):FlxUICheckBox
+	private function _loadCheckBox(data:Access):FlxUICheckBox
 	{
 		var src:String = "";
 		var fc:FlxUICheckBox = null;
@@ -3170,7 +3175,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 	}
 	
 	
-	private function _loadDropDownMenu(data:Fast):FlxUIDropDownMenu
+	private function _loadDropDownMenu(data:Access):FlxUIDropDownMenu
 	{
 		/*
 		 *   <dropdown label="Something">
@@ -3283,7 +3288,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return fud;
 	}
 	
-	private function _loadTest(data:Fast, nodeName:String="load_if"):Bool {
+	private function _loadTest(data:Access, nodeName:String="load_if"):Bool {
 		var result:Bool = true;
 		
 		//If this is itself a "<load_if>" tag, return whether or not it passes the test
@@ -3331,7 +3336,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return result;
 	}
 	
-	private function _loadTestSub(node:Fast):Bool
+	private function _loadTestSub(node:Access):Bool
 	{
 		var matchValue:Bool = U.xml_bool(node.x, "is", true);
 		var match:Bool = matchValue;
@@ -3461,7 +3466,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return null;
 	}
 	
-	private function _loadLayout(data:Fast):FlxUI
+	private function _loadLayout(data:Access):FlxUI
 	{
 		var name:String = U.xml_str(data.x, "name", true);
 		var X:Float = _loadX(data);
@@ -3500,24 +3505,24 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		_scaledAssets = null;
 	}
 	
-	private function getXML(id:String, extension:String = "xml", getFast:Bool = true, dir = "assets/xml/", getFirstElement:Bool = true):Dynamic
+	private function getXML(id:String, extension:String = "xml", getAccess:Bool = true, dir = "assets/xml/", getFirstElement:Bool = true):Dynamic
 	{
-		return U.xml(id, extension, getFast, dir, getFirstElement);
+		return U.xml(id, extension, getAccess, dir, getFirstElement);
 	}
 	
-	private function newUI(data:Fast = null, ptr:IEventGetter = null, superIndex_:FlxUI = null, tongue_:IFireTongue = null, liveFilePath_:String="", uiVars_:Map<String,String>=null,loadThingCallback_:IFlxUIWidget->String->Void=null, postLoadThingCallback_:IFlxUIWidget->String->Void=null):FlxUI
+	private function newUI(data:Access = null, ptr:IEventGetter = null, superIndex_:FlxUI = null, tongue_:IFireTongue = null, liveFilePath_:String="", uiVars_:Map<String,String>=null,loadThingCallback_:IFlxUIWidget->String->Void=null, postLoadThingCallback_:IFlxUIWidget->String->Void=null):FlxUI
 	{
 		return new FlxUI(data, ptr, superIndex_, tongue_, liveFilePath_, uiVars_, loadThingCallback_, postLoadThingCallback_);
 	}
 	
-	private function createUI(data:Fast):FlxUI
+	private function createUI(data:Access):FlxUI
 	{
 		return newUI(data, this, this, _ptr_tongue, liveFilePath);
 	}
 	
-	private function _loadTabMenu(data:Fast):FlxUITabMenu{
+	private function _loadTabMenu(data:Access):FlxUITabMenu{
 		
-		var back_def:Fast = getUseDef(data, "back_def");
+		var back_def:Access = getUseDef(data, "back_def");
 		back_def = consolidateData(back_def, data);
 		
 		var back_type:String = U.xml_str(data.x, "back_type", true, "chrome");
@@ -3529,7 +3534,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 			default: _load9SliceSprite(back_def, "tab_menu");
 		}
 		
-		var tab_def:Fast = null;
+		var tab_def:Access = null;
 		
 		var stretch_tabs:Bool = U.xml_bool(data.x, "stretch_tabs",false);
 		
@@ -3584,7 +3589,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 					
 					label = getText(label,context,true,code);
 					
-					var tab_info:Fast = consolidateData(tab_node, tab_def);
+					var tab_info:Access = consolidateData(tab_node, tab_def);
 					var tab:IFlxUIButton = cast _loadButton(tab_info, true, true, "tab_menu");
 					tab.name = name;
 					list_tabs.push(tab);
@@ -3634,7 +3639,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return fg;
 	}
 	
-	private function _loadNumericStepper(data:Fast, setCallback:Bool = true):IFlxUIWidget {
+	private function _loadNumericStepper(data:Access, setCallback:Bool = true):IFlxUIWidget {
 		
 		/*
 		 * <numeric_stepper step="1" value="0" min="1" max="2" decimals="1">
@@ -3693,7 +3698,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return ns;
 	}
 	
-	private function getResizeRatio(data:Fast,defaultAxis:Int=FlxUISprite.RESIZE_RATIO_Y):FlxPoint
+	private function getResizeRatio(data:Access,defaultAxis:Int=FlxUISprite.RESIZE_RATIO_Y):FlxPoint
 	{
 		var str:String = U.xml_str(data.x, "resize_ratio_x", true);
 		if (str == "")
@@ -3722,7 +3727,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 	}
 	
 	@:access(flixel.addons.ui.FlxUITypedButton)
-	private function _loadButton(data:Fast, setCallback:Bool = true, isToggle:Bool = false, load_code:String = ""):IFlxUIWidget
+	private function _loadButton(data:Access, setCallback:Bool = true, isToggle:Bool = false, load_code:String = ""):IFlxUIWidget
 	{
 		var src:String = ""; 
 		var fb:IFlxUIButton = null;
@@ -4157,7 +4162,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return b2;
 	}
 	
-	private function _loadRegion(data:Fast):FlxUIRegion
+	private function _loadRegion(data:Access):FlxUIRegion
 	{
 		var bounds = calcMaxMinSize(data);
 		
@@ -4177,7 +4182,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return reg;
 	}
 	
-	private function _load9SliceSprite(data:Fast, load_code:String = ""):FlxUI9SliceSprite
+	private function _load9SliceSprite(data:Access, load_code:String = ""):FlxUI9SliceSprite
 	{
 		var src:String = "";
 		var f9s:FlxUI9SliceSprite = null;
@@ -4263,7 +4268,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return f9s;
 	}
 	
-	function load9SliceSprite_scaleSub(slice9:Array<Int>,data:Fast,src:String,srcString:String="src"):Array<Int>
+	function load9SliceSprite_scaleSub(slice9:Array<Int>,data:Access,src:String,srcString:String="src"):Array<Int>
 	{
 		//Figure out what effective scale we are using for the scaled source material
 		var origSrc = U.xml_gfx(data.x, srcString);
@@ -4301,7 +4306,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return slice9;
 	}
 	
-	private inline function _loadTileRule(data:Fast):Int {
+	private inline function _loadTileRule(data:Access):Int {
 		var tileStr:String = U.xml_str(data.x, "tile", true,"");
 		var tile:Int = FlxUI9SliceSprite.TILE_NONE;
 		switch(tileStr) {
@@ -4312,7 +4317,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return tile;
 	}
 	
-	private function _loadBox(data:Fast):FlxUIGroup
+	private function _loadBox(data:Access):FlxUIGroup
 	{
 		var src:String = ""; 
 		var fs:FlxUIGroup = null;
@@ -4386,7 +4391,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return fs;
 	}
 	
-	private function _loadLine(data:Fast):FlxUILine
+	private function _loadLine(data:Access):FlxUILine
 	{
 		var src:String = ""; 
 		
@@ -4429,7 +4434,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return fl;
 	}
 	
-	private function _loadBar(data:Fast):FlxUIBar
+	private function _loadBar(data:Access):FlxUIBar
 	{
 		var fb:FlxUIBar = null;
 		
@@ -4534,7 +4539,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return fb;
 	}
 	
-	private function _loadSprite(data:Fast):FlxUISprite
+	private function _loadSprite(data:Access):FlxUISprite
 	{
 		var src:String = ""; 
 		var fs:FlxUISprite = null;
@@ -4683,7 +4688,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return fs;
 	}
 	
-	private function loadSmooth(scaleNode:Fast, defaultValue:Bool):Bool
+	private function loadSmooth(scaleNode:Access, defaultValue:Bool):Bool
 	{
 		var defaultStr:String = defaultValue ? "true" : "false";
 		var smoothStr:String = U.xml_str(scaleNode.x, "smooth", true, defaultStr);
@@ -4700,7 +4705,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 	 * @return	the unique key of the scaled bitmap
 	 */
 	
-	private function loadScaledSrc(data:Fast, attName:String="src", scaleName:String="scale", tilesWide:Int=1, tilesTall:Int=1):String
+	private function loadScaledSrc(data:Access, attName:String="src", scaleName:String="scale", tilesWide:Int=1, tilesTall:Int=1):String
 	{
 		var src:String = U.xml_str(data.x, attName);					//get the original src
 		if (data.hasNode.resolve(scaleName))
@@ -4865,7 +4870,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return 0;
 	}
 	
-	private function getRound(node:Fast, defaultStr:String = ""):Rounding
+	private function getRound(node:Access, defaultStr:String = ""):Rounding
 	{
 		var roundStr:String = U.xml_str(node.x, "round", true, defaultStr);
 		switch(roundStr)
@@ -4892,7 +4897,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return f;
 	}
 	
-	private function calcMaxMinSize(data:Fast, width:Null<Float> = null, height:Null<Float> = null):MaxMinSize
+	private function calcMaxMinSize(data:Access, width:Null<Float> = null, height:Null<Float> = null):MaxMinSize
 	{
 		var min_w:Float = 0;
 		var min_h:Float = 0;
@@ -5284,7 +5289,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return return_val;
 	}
 	
-	private function _loadCursor(data:Fast):Void
+	private function _loadCursor(data:Access):Void
 	{
 		if (data.hasNode.list)
 		{
@@ -5313,7 +5318,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		}
 	}
 	
-	private function _loadPosition(data:Fast, thing:IFlxUIWidget):Void
+	private function _loadPosition(data:Access, thing:IFlxUIWidget):Void
 	{
 		if (thing == null) return;
 		
@@ -5421,7 +5426,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		_delta(thing, X, Y);
 	}
 	
-	private function _loadBorder(data:Fast):BorderDef
+	private function _loadBorder(data:Access):BorderDef
 	{
 		var borderDef = BorderDef.fromXML(data.x);
 		
@@ -5434,7 +5439,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return borderDef;
 	}
 	
-	private function _loadColor(data:Fast,colorName:String="color",_default:Int=0xffffffff):Int {
+	private function _loadColor(data:Access,colorName:String="color",_default:Int=0xffffffff):Int {
 		var colorStr:String = U.xml_str(data.x, colorName);
 		if (colorStr == "" && data.x.nodeName == colorName) { 
 			colorStr = U.xml_str(data.x, "value"); 
@@ -5444,7 +5449,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return color;
 	}
 	
-	private function _loadFontDef(data:Fast):FontDef {
+	private function _loadFontDef(data:Access):FontDef {
 		var fd:FontDef = FontDef.fromXML(data.x);
 		var fontSize:Int = Std.int(_loadHeight(data, 8, "size"));
 		fd.format.size = FlxUI.fontSize(fd.file,fontSize);
@@ -5452,7 +5457,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return fd;
 	}
 	
-	private function _loadFontFace(data:Fast):String{
+	private function _loadFontFace(data:Access):String{
 		var fontFace:String = U.xml_str(data.x, "font"); 
 		var fontStyle:String = U.xml_str(data.x, "style");
 		var the_font:String = null;
@@ -5505,7 +5510,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 	 * @param	data
 	 */
 	
-	private static inline function getParams(data:Fast):Array<Dynamic>{
+	private static inline function getParams(data:Access):Array<Dynamic>{
 		var params:Array<Dynamic> = null;
 		
 		if (data.hasNode.param) {
@@ -5555,7 +5560,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return 0;
 	}
 	
-	private function getUseDef(node:Fast, attName:String="use_def")
+	private function getUseDef(node:Access, attName:String="use_def")
 	{
 		var use_def:String = U.xml_str(node.x, attName, true);
 		
@@ -5567,7 +5572,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 			}
 		}
 		
-		var theDef:Fast = null;
+		var theDef:Access = null;
 		if (use_def != "")
 		{
 			theDef = getDefinition(use_def);
@@ -5576,14 +5581,14 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 		return theDef;
 	}
 	
-	private function formatButtonText(data:Fast, button:Dynamic):FlxText
+	private function formatButtonText(data:Access, button:Dynamic):FlxText
 	{
 		if (data != null && data.hasNode.text)
 		{
 			var textNode = data.node.text;
 			
-			var text_def:Fast = getUseDef(textNode);
-			var info:Fast = consolidateData(textNode, text_def);
+			var text_def:Access = getUseDef(textNode);
+			var info:Access = consolidateData(textNode, text_def);
 			
 			var case_name:String = U.xml_name(info.x);
 			var the_font:String = _loadFontFace(info);
