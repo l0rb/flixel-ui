@@ -14,6 +14,7 @@ import flixel.FlxSprite;
 import flixel.graphics.FlxGraphic;
 import flixel.input.FlxInput;
 import flixel.input.IFlxInput;
+import flixel.text.FlxText;
 import flixel.ui.FlxButton;
 import flixel.util.FlxArrayUtil;
 import flixel.util.FlxColor;
@@ -27,6 +28,8 @@ class FlxUITypedButton<T:FlxSprite> extends FlxTypedButton<T> implements IFlxUIB
 {
 	public var name:String; 
 	public var resize_ratio:Float = -1;
+	
+	public var allowResize:Bool = true;
 	
 	//whether the resize_ratio means X in terms of Y, or Y in terms of X
 	public var resize_ratio_axis:Int = FlxUISprite.RESIZE_RATIO_Y;
@@ -51,6 +54,8 @@ class FlxUITypedButton<T:FlxSprite> extends FlxTypedButton<T> implements IFlxUIB
 	public var mouseIsOver(get, never):Bool;
 	public var mouseIsOut(get, never):Bool;
 	public var justMousedOut(get, never):Bool;
+	
+	public var uiButtonType(default, null):FlxUIButtonType;
 	
 	private inline function get_justMousedOver():Bool
 	{
@@ -89,6 +94,9 @@ class FlxUITypedButton<T:FlxSprite> extends FlxTypedButton<T> implements IFlxUIB
 	public var up_toggle_visible:Bool = true;
 	public var over_toggle_visible:Bool = true;
 	public var down_toggle_visible:Bool = true;
+	
+	/**Will cause this button to not show an "over" visual state, even if it has one. Useful for applying globally to buttons in e.g. touch-specific builds**/
+	public var disable_highlight_visual(default, set):Bool = false;
 	
 	public var toggle_label(default, set):FlxSprite;
 	public function set_toggle_label(f:FlxSprite):FlxSprite
@@ -138,6 +146,8 @@ class FlxUITypedButton<T:FlxSprite> extends FlxTypedButton<T> implements IFlxUIB
 	//TODO: add ability to set this property via xml, add documentation
 	public var autoResizeLabel:Bool = false;	//if this is true, when resize() is called on the button, it calls resize() on the label
 	
+	public var autoCenterLabel:Bool = true;
+	
 	/**
 	 * Creates a new FlxUITypedButton object with a gray background.
 	 * 
@@ -157,6 +167,8 @@ class FlxUITypedButton<T:FlxSprite> extends FlxTypedButton<T> implements IFlxUIB
 		labelAlphas = [for (i in 0...3) 1];
 		
 		inputOver = new FlxInput(0);
+		
+		uiButtonType = GENERIC_BUTTON;
 	}
 	
 	override public function graphicLoaded():Void {
@@ -287,11 +299,20 @@ class FlxUITypedButton<T:FlxSprite> extends FlxTypedButton<T> implements IFlxUIB
 	 * Offset the statusAnimations-index by 3 when toggled.
 	 */
 	override public function updateStatusAnimation():Void {
-		if (has_toggle && toggled) {
-			animation.play(statusAnimations[status + 3]);
+		if (has_toggle && toggled) { 
+			animation.play(statusAnimations[_statusForAnimation + 3]);
 		} else {
 			super.updateStatusAnimation();
 		}
+	}
+	
+	override function updateAnimation(elapsed:Float):Void 
+	{
+		#if vita
+		//do nothing
+		#else
+		super.updateAnimation(elapsed);
+		#end
 	}
 	
 	/**
@@ -308,9 +329,41 @@ class FlxUITypedButton<T:FlxSprite> extends FlxTypedButton<T> implements IFlxUIB
 	
 	public function resize(W:Float, H:Float):Void
 	{
+		if (!allowResize) return;
 		doResize(W, H);
 	}
 	
+	@:access(flixel.text.FlxText)
+	private function labelSizeSafe(isWidth:Bool):Float
+	{
+		if (Std.is(_spriteLabel, FlxText))
+		{
+			var t:FlxText = cast _spriteLabel;
+			var oldRegen = t._regen;
+			t._regen = false;
+			var returnVal:Float = 0;
+			if (isWidth)
+			{
+				returnVal = t.width;
+			}
+			else
+			{
+				returnVal = t.height;
+			}
+			t._regen = oldRegen;
+			return returnVal;
+		}
+		if (isWidth)
+		{
+			return _spriteLabel.width;
+		}
+		else
+		{
+			return _spriteLabel.height;
+		}
+	}
+	
+	@:allow(flixel.addons.ui.FlxUITooltipManager)
 	private function doResize(W:Float, H:Float, Redraw:Bool = true):Void
 	{
 		var old_width:Float = width;
@@ -320,8 +373,8 @@ class FlxUITypedButton<T:FlxSprite> extends FlxTypedButton<T> implements IFlxUIB
 		var label_diffy:Float = 0;
 		if (label != null)
 		{
-			label_diffx = width - _spriteLabel.width;
-			label_diffy = height - _spriteLabel.height;
+			label_diffx = width - labelSizeSafe(true);  //_spriteLabel.width;
+			label_diffy = height - labelSizeSafe(false);//_spriteLabel.height;
 		}
 		
 		if (W <= 0) { W = 80; }
@@ -331,22 +384,37 @@ class FlxUITypedButton<T:FlxSprite> extends FlxTypedButton<T> implements IFlxUIB
 		{
 			if (_slice9_assets != null)
 			{
-				loadGraphicSlice9(_slice9_assets, Std.int(W), Std.int(H), _slice9_arrays,tile,resize_ratio,has_toggle,_src_w,_src_h,_frame_indeces);
+				loadGraphicSlice9(_slice9_assets, Std.int(W), Std.int(H), _slice9_arrays, tile, resize_ratio, has_toggle, _src_w, _src_h, _frame_indeces);
 			}
 			else
 			{
 				if (_no_graphic)
 				{
-					var upB:BitmapData;
+					var blank:BitmapData;
+					var key:String = "";
+					
 					if (!has_toggle)
 					{
-						upB = new BitmapData(Std.int(W), Std.int(H * 3), true, 0x00000000);
+						key = "button_blank_1x3";
+						if (!FlxG.bitmap.checkCache(key))
+						{
+							blank = new BitmapData(1, 3, true, 0x00000000);
+							FlxG.bitmap.add(blank, true, key);
+						}
 					}
 					else
 					{
-						upB = new BitmapData(Std.int(W), Std.int(H * 6), true, 0x00000000);
+						key = "button_blank_1x6";
+						if (!FlxG.bitmap.checkCache(key))
+						{
+							blank = new BitmapData(1, 6, true, 0x00000000);
+							FlxG.bitmap.add(blank, true, key);
+						}
 					}
-					loadGraphicsUpOverDown(upB);
+					
+					loadGraphic(key, true, 1, 1);
+					width = Std.int(W);
+					height = Std.int(H);
 				}
 				else
 				{
@@ -367,7 +435,7 @@ class FlxUITypedButton<T:FlxSprite> extends FlxTypedButton<T> implements IFlxUIB
 			}
 		}
 		
-		autoCenterLabel();			//center based on new dimensions
+		centerLabel();			//center based on new dimensions
 		
 		var diff_w:Float = width - old_width;
 		var diff_h:Float = height - old_height;
@@ -452,12 +520,14 @@ class FlxUITypedButton<T:FlxSprite> extends FlxTypedButton<T> implements IFlxUIB
 	 * @param   key string key for caching (optional)
 	 */
 	
-	public function loadGraphicsUpOverDown(asset:Dynamic, for_toggle:Bool=false, ?key:String):Void {
+	public function loadGraphicsUpOverDown(asset:Dynamic, for_toggle:Bool = false, ?key:String):Void
+	{
 		_slice9_assets = null;
 		_slice9_arrays = null;
 		resize_ratio = -1;
 		
-		if (for_toggle) {
+		if (for_toggle)
+		{
 			has_toggle = true;	//this makes it assume it's 6 images tall
 		}
 		
@@ -476,6 +546,11 @@ class FlxUITypedButton<T:FlxSprite> extends FlxTypedButton<T> implements IFlxUIB
 			bd = getBmp(asset);
 		}
 		
+		if (tryQuickLoad(bd, has_toggle, key))
+		{
+			return;
+		}
+		
 		upB = grabButtonFrame(bd, FlxButton.NORMAL, has_toggle, 0, 0, key);
 		overB = grabButtonFrame(bd, FlxButton.HIGHLIGHT, has_toggle, 0, 0, key);
 		downB = grabButtonFrame(bd, FlxButton.PRESSED, has_toggle, 0, 0, key);
@@ -486,7 +561,8 @@ class FlxUITypedButton<T:FlxSprite> extends FlxTypedButton<T> implements IFlxUIB
 			normalGraphic = assembleButtonFrames(upB, overB, downB);
 		}
 		
-		if (has_toggle) {
+		if (has_toggle)
+		{
 			var normalPixels:BitmapData = assembleButtonFrames(upB, overB, downB);
 			
 			upB = grabButtonFrame(bd, FlxButton.NORMAL + 3, true, 0, 0, key);
@@ -500,9 +576,42 @@ class FlxUITypedButton<T:FlxSprite> extends FlxTypedButton<T> implements IFlxUIB
 			togglePixels = FlxDestroyUtil.dispose(togglePixels);
 			
 			loadGraphic(combinedPixels, true, upB.width, upB.height, false, key);
-		}else {
+		}
+		else
+		{
 			loadGraphic(normalGraphic, true, upB.width, upB.height, false, key);
 		}
+	}
+	
+	private function tryQuickLoad(bd:BitmapData, has_toggle:Bool, key:String):Bool
+	{
+		var h:Int = 0;
+		var w:Int = Std.int(bd.width);
+		if (!has_toggle)
+		{
+			h = Std.int(bd.height / 3);
+			loadGraphic(bd, true, w, h, false, key);
+			return true;
+		}
+		else
+		{
+			h = Std.int(bd.height / 6);
+			loadGraphic(bd, true, w, h, false, key);
+			return true;
+		}
+		return false;
+	}
+	
+	private function checkCacheWith(str:String):String
+	{
+		for (key in @:privateAccess FlxG.bitmap._cache.keys())
+		{
+			if (key.indexOf(str) != -1)
+			{
+				str += "    " + key + "\n";
+			}
+		}
+		return str;
 	}
 	
 	/**Graphics chopping functions**/
@@ -718,6 +827,8 @@ class FlxUITypedButton<T:FlxSprite> extends FlxTypedButton<T> implements IFlxUIB
 			//Check if we can exit early because this key is already cached
 			if (FlxG.bitmap.checkCache(key))
 			{
+				var graphic = FlxG.bitmap.get(key);
+				if (W > graphic.width) W = graphic.width; 	//force truncate to avoid ugly crashes
 				loadGraphic(key, true, W, H);
 				return;
 			}
@@ -857,7 +968,9 @@ class FlxUITypedButton<T:FlxSprite> extends FlxTypedButton<T> implements IFlxUIB
 	 * Sets labelOffset to center the label horizontally and vertically
 	 */
 	
-	public function autoCenterLabel():Void {
+	public function centerLabel():Void {
+		if (!autoCenterLabel) return;
+		
 		if (label != null) {
 			var offX:Float = 0;
 			var offY:Float = 0;
@@ -996,26 +1109,35 @@ class FlxUITypedButton<T:FlxSprite> extends FlxTypedButton<T> implements IFlxUIB
 	 * If overB or downB are missing, it will not include those frames.
 	 */
 	
-	public function assembleButtonFrames(upB:BitmapData, overB:BitmapData, downB:BitmapData):BitmapData {
+	public function assembleButtonFrames(upB:BitmapData, overB:BitmapData, downB:BitmapData):BitmapData
+	{
 		var pixels:BitmapData;
 		
-		if (overB != null) {
-			if (downB != null) {
+		if (overB != null)
+		{
+			if (downB != null)
+			{
 				pixels = new BitmapData(upB.width, upB.height * 3);
-			}else {
+			}
+			else
+			{
 				pixels = new BitmapData(upB.width, upB.height * 2);
 			}
-		}else {
+		}
+		else
+		{
 			pixels = new BitmapData(upB.width, upB.height);
 		}
 		
 		pixels.copyPixels(upB, upB.rect, _flashPointZero);
 		
-		if(overB != null){
+		if (overB != null)
+		{
 			_flashPoint.x = 0;
 			_flashPoint.y = upB.height;
 			pixels.copyPixels(overB, overB.rect, _flashPoint);
-			if (downB != null) {
+			if (downB != null)
+			{
 				_flashPoint.y = upB.height * 2;
 				pixels.copyPixels(downB, downB.rect, _flashPoint);
 			}
@@ -1062,10 +1184,10 @@ class FlxUITypedButton<T:FlxSprite> extends FlxTypedButton<T> implements IFlxUIB
 					toggle_label.visible = false;
 				}
 				_spriteLabel.visible = true;
-				return label;
+				return _spriteLabel;
 			}
 		}
-		return label;
+		return _spriteLabel;
 	}
 	
 	override private function onUpHandler():Void
@@ -1142,8 +1264,36 @@ class FlxUITypedButton<T:FlxSprite> extends FlxTypedButton<T> implements IFlxUIB
 		}
 	}
 	
+	private function set_disable_highlight_visual(b:Bool):Bool
+	{
+		disable_highlight_visual = b;
+		if (!disable_highlight_visual)
+		{
+			_statusForAnimation = status;
+		}
+		else
+		{
+			if (_statusForAnimation == FlxButton.HIGHLIGHT)
+			{
+				_statusForAnimation = FlxButton.NORMAL;
+			}
+		}
+		return disable_highlight_visual;
+	}
+	
+	override function set_status(Value:Int):Int 
+	{
+		if (disable_highlight_visual && Value == FlxButton.HIGHLIGHT)
+		{
+			Value = FlxButton.NORMAL;
+		}
+		_statusForAnimation = Value;
+		return super.set_status(Value);
+	}
+	
 	private override function set_x(NewX:Float):Float 
 	{
+		if (x == NewX) return x;
 		super.set_x(NewX);
 		
 		if (_spriteLabel != null)
@@ -1163,6 +1313,7 @@ class FlxUITypedButton<T:FlxSprite> extends FlxTypedButton<T> implements IFlxUIB
 	
 	private override function set_y(NewY:Float):Float 
 	{
+		if (y == NewY) return y;
 		super.set_y(NewY);
 		
 		if (label != null)
@@ -1198,4 +1349,14 @@ class FlxUITypedButton<T:FlxSprite> extends FlxTypedButton<T> implements IFlxUIB
 	private var _slice9_assets:Array<FlxGraphicAsset>;		//the asset id's of the original 9-slice scale assets
 	
 	private var _centerLabelOffset:FlxPoint = null;	//this is the offset necessary to center ALL the labels
+	
+	private var _statusForAnimation:Int;
+}
+
+@:enum abstract FlxUIButtonType(Int) from Int{
+
+	public var TEXT_BUTTON = 0;
+	public var SPRITE_BUTTON = 1;
+	public var GENERIC_BUTTON = 2;
+	
 }

@@ -4,6 +4,7 @@ import flixel.addons.ui.interfaces.IFlxUIButton;
 import flixel.addons.ui.interfaces.IFlxUIState;
 import flixel.addons.ui.interfaces.IFlxUIWidget;
 import flixel.math.FlxPoint;
+import flixel.util.FlxColor;
 
 /**
  * ...
@@ -65,7 +66,18 @@ class FlxUIPopup extends FlxUISubState implements IFlxUIWidget
 	
 	/**************************************/
 	
-	public override function create():Void {
+	public function new(BGColor:FlxColor=0)
+	{
+		super(BGColor);
+	}
+	
+	public override function create():Void
+	{
+		createFlxUIPopup();
+	}
+	
+	private function createFlxUIPopup():Void
+	{
 		if(_xml_id == ""){
 			_xml_id = FlxUIAssets.XML_DEFAULT_POPUP_ID;
 		}
@@ -73,7 +85,7 @@ class FlxUIPopup extends FlxUISubState implements IFlxUIWidget
 		scrollFactor = FlxPoint.get(0, 0);
 		getTextFallback = myGetTextFallback;
 		
-		super.create();
+		createFlxUISubState();
 		
 		if (_quickSetupParams != null) {
 			_doQuickSetup();
@@ -125,6 +137,7 @@ class FlxUIPopup extends FlxUISubState implements IFlxUIWidget
 					}
 					
 					var buttonAmount:Int = Std.int(eventParams[0]);
+					var label:String = Std.string(eventParams[1]);
 					if (str == "affirm" || str == "cancel" || str == "alt")
 					{
 						if (Std.is(_parentState, IFlxUIState)) {

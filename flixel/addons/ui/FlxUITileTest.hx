@@ -7,6 +7,12 @@ import flixel.addons.ui.interfaces.IResizable;
 import flixel.math.FlxPoint;
 import flixel.util.FlxColor;
 
+#if haxe4
+import haxe.xml.Access;
+#else
+import haxe.xml.Fast as Access;
+#end
+
 /**
  * This is mostly just for testing purposes, it is NOT a replacement for FlxTileMap
  * @author 

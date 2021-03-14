@@ -4,6 +4,7 @@ import flixel.addons.ui.interfaces.IFlxUIButton;
 import flixel.FlxSprite;
 import flixel.group.FlxSpriteGroup;
 import flixel.util.FlxColor;
+import flixel.addons.ui.FlxUITypedButton.FlxUIButtonType;
 
 /**
  * This class extends FlxUISpriteButton and has a Sprite "label"
@@ -14,6 +15,8 @@ import flixel.util.FlxColor;
  */
 class FlxUISpriteButton extends FlxUITypedButton<FlxSprite> implements IFlxUIButton
 {	
+	private var labelIsGroup:Bool = false;
+	
 	/**
 	 * Creates a new FlxUISpriteButton.
 	 * 
@@ -31,9 +34,12 @@ class FlxUISpriteButton extends FlxUITypedButton<FlxSprite> implements IFlxUIBut
 		
 		up_color = over_color = down_color = up_toggle_color = over_toggle_color = down_toggle_color = FlxColor.WHITE;	
 		
-		if (Asset != null) {
+		if (Asset != null)
+		{
 			label = Asset;
 		}
+		
+		uiButtonType = FlxUIButtonType.SPRITE_BUTTON;
 	}
 	
 	/**For IResizable:**/
@@ -41,10 +47,26 @@ class FlxUISpriteButton extends FlxUITypedButton<FlxSprite> implements IFlxUIBut
 	public override function resize(W:Float, H:Float):Void 
 	{
 		super.resize(W, H);
-		autoCenterLabel();
+		centerLabel();
 	}
 	
-	public override function autoCenterLabel():Void {
+	override function set_label(Value:FlxSprite):FlxSprite 
+	{
+		labelIsGroup = (Std.is(Value, FlxSpriteGroup));
+		return super.set_label(Value);
+	}
+	
+	override public function update(elapsed:Float):Void 
+	{
+		if (labelIsGroup)
+		{
+			label.update(elapsed);
+		}
+		super.update(elapsed);
+	}
+	
+	
+	public override function centerLabel():Void {
 		if (label != null) {
 			if (Std.is(label, FlxSpriteGroup)) {
 				var g:FlxSpriteGroup = cast label;
@@ -63,7 +85,7 @@ class FlxUISpriteButton extends FlxUITypedButton<FlxSprite> implements IFlxUIBut
 					sprite.y = (H - sprite.height)/2;
 				}
 			}
-			super.autoCenterLabel();					//center the label object itself
+			super.centerLabel();					//center the label object itself
 		}
 	}
 }

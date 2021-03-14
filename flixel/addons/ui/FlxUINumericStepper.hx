@@ -19,6 +19,7 @@ class FlxUINumericStepper extends FlxUIGroup implements IFlxUIWidget implements 
 	private var button_plus:FlxUITypedButton<FlxSprite>;
 	private var button_minus:FlxUITypedButton<FlxSprite>;
 	private var text_field:FlxText;
+	private var callback:FlxUINumericStepper->Void;
 	
 	public var stepSize:Float=0;
 	public var decimals(default, set):Int=0;			//Number of decimals
@@ -163,9 +164,11 @@ class FlxUINumericStepper extends FlxUIGroup implements IFlxUIWidget implements 
 	 * @param	ButtonMinus			Optional button to use for minus
 	 * @param	IsPercent			Whether to portray the number as a percentage
 	 */
-	public function new(X:Float = 0, Y:Float = 0, StepSize:Float=1, DefaultValue:Float=0, Min:Float=-999, Max:Float=999, Decimals:Int=0, Stack:Int=STACK_HORIZONTAL, ?TextField:FlxText, ?ButtonPlus:FlxUITypedButton<FlxSprite>, ?ButtonMinus:FlxUITypedButton<FlxSprite>, IsPercent:Bool=false) 
+	public function new(X:Float = 0, Y:Float = 0, StepSize:Float=1, DefaultValue:Float=0, Min:Float=-999, Max:Float=999, Decimals:Int=0, Stack:Int=STACK_HORIZONTAL, ?TextField:FlxText, ?ButtonPlus:FlxUITypedButton<FlxSprite>, ?ButtonMinus:FlxUITypedButton<FlxSprite>, IsPercent:Bool=false, ?Callback:FlxUINumericStepper->Void) 
 	{
 		super(X, Y);
+		
+		callback = Callback;
 		
 		if (TextField == null) {
 			TextField = new FlxUIInputText(0, 0, 25);
@@ -241,10 +244,23 @@ class FlxUINumericStepper extends FlxUIGroup implements IFlxUIWidget implements 
 		//if I just added a decimal don't treat that as having changed the value just yet
 		if (!justAddedDecimal)
 		{
-			value = Std.parseFloat(text);
+			value = parseText(text);
 			_doCallback(EDIT_EVENT);
 			_doCallback(CHANGE_EVENT);
 		}
+	}
+	
+	private function parseText(str:String):Float{
+		
+		if (isPercent && str.indexOf("%") != -1){
+			var baseStr = StringTools.replace(str, "%", "");
+			var baseVal = Std.parseFloat(baseStr);
+			return (baseVal / 100);
+			
+		}else{
+			return Std.parseFloat(str);
+		}
+		return 0;
 	}
 	
 	private function _onPlus():Void {
@@ -262,6 +278,10 @@ class FlxUINumericStepper extends FlxUIGroup implements IFlxUIWidget implements 
 	private function _doCallback(event_name:String):Void {
 		if(broadcastToFlxUI){
 			FlxUI.event(event_name, this, value, params);
+		}
+		if (callback != null)
+		{
+			callback(this);
 		}
 	}
 }

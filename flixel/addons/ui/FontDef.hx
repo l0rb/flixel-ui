@@ -76,6 +76,13 @@ class FontDef
 		return newThis;
 	}
 	
+	public static function copyFromFlxTextRegion(t:FlxUITextRegion):FontDef
+	{
+		var def = t.fontDef.clone();
+		def.size = t.size;
+		return def;
+	}
+	
 	public static function copyFromTextField(t:TextField):FontDef {
 		var dtf:TextFormat = t.defaultTextFormat;
 		var fd = new FontDef("");
@@ -166,6 +173,7 @@ class FontDef
 		setFontStyle(style);
 		
 		var extension:String = "";
+		var exists:Bool = false;
 		
 		for (ext in EXTENSIONS) {
 			if (str.indexOf(ext) != -1) {	//if it has a particular extension
@@ -216,11 +224,12 @@ class FontDef
 	 * @return	font - extension, ie "verdanab"
 	 */
 	
-	private function stripFontExtensions(str:String):String {
+	private static function stripFontExtensions(str:String):String {
 		if (str == null) return str;
 		for (ext in EXTENSIONS) {
-			if(str != null && str.indexOf(ext) != -1){
-				str = StringTools.replace(str, ext, "");
+            var i = str.indexOf(ext);
+			if(i != -1){
+            	str = str.substr(0,i);
 			}
 		}
 		return str;
@@ -281,6 +290,13 @@ class FontDef
 				default: return "";
 			}
 		}
+		return "";
+	}
+	
+	public function getFontStyleLetter():String {
+		if (format.bold && format.italic) return "z";
+		if (format.bold) return "b";
+		if (format.italic) return "i";
 		return "";
 	}
 	

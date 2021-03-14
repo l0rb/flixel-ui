@@ -1,6 +1,7 @@
 package flixel.addons.ui;
 
 import flixel.addons.ui.FlxUI.UIEventCallback;
+import flixel.addons.ui.interfaces.IFlxUIText;
 import flixel.addons.ui.interfaces.IFlxUIWidget;
 import flixel.addons.ui.interfaces.IHasParams;
 import flixel.addons.ui.interfaces.IResizable;
@@ -12,15 +13,19 @@ import openfl.text.TextField;
  * Simple extension to the basic text field class.
  * @author Lars Doucet
  */
-class FlxUIText extends FlxText implements IResizable implements IFlxUIWidget implements IHasParams
+class FlxUIText extends FlxText implements IResizable implements IFlxUIWidget implements IHasParams implements IFlxUIText
 {
 	public var broadcastToFlxUI:Bool = true;
 	public var name:String; 
 	public var params(default, set):Array<Dynamic>;
 	public var minimumHeight(default, set):Float = 1;
 	
-	public function new(X:Float = 0, Y:Float = 0, FieldWidth:Float = 0, ?Text:String, Size:Int = 8, EmbeddedFont:Bool = true)
+	public function new(X:Float = 0, Y:Float = 0, FieldWidth:Float = 0, ?Text:String, Size:Int = 8, EmbeddedFont:Bool = true, ?SkipFirstRegen:Bool = false)
 	{
+		if (SkipFirstRegen)
+		{
+			_regen = false;
+		}
 		super(X, Y, FieldWidth, Text, Size, EmbeddedFont);
 	}
 	
@@ -41,12 +46,12 @@ class FlxUIText extends FlxText implements IResizable implements IFlxUIWidget im
 		textField.width = width;
 		
 		var old_size:Int = size;
-		var diff:Float = (height - graphic.bitmap.height);
+		var diff:Float = (h - graphic.bitmap.height);
 		
 		#if flash
 			var oldText:String = text;
 			if (oldText == "") { text = "T";}
-			diff = height - (Std.int(textField.textHeight) + 4);
+			diff = h - (Std.int(textField.textHeight) + 4);
 		#end
 		
 		var failsafe:Int = 0;
@@ -66,7 +71,7 @@ class FlxUIText extends FlxText implements IResizable implements IFlxUIWidget im
 			calcFrame(true);
 			
 			#if flash
-				diff = height - (Std.int(textField.textHeight) + 4);
+				diff = h - (Std.int(textField.textHeight) + 4);
 			#else
 				diff = (h - graphic.bitmap.height);
 			#end

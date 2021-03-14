@@ -28,6 +28,7 @@ import haxe.xml.Fast as Access;
  * 
  * @author Lars Doucet
  */
+@:access(flixel.addons.ui.FlxUIState)
 class FlxUISubState extends FlxSubState implements IFlxUIState
 {
 	public var destroyed:Bool;
@@ -44,6 +45,7 @@ class FlxUISubState extends FlxSubState implements IFlxUIState
 	
 	private var _xml_id:String = "";	//the xml to load
 	private var _ui:FlxUI;
+	private var _ui_vars:Map<String,String>;
 	private var _tongue:IFireTongue;
 		
 	//set this to true to make it automatically reload the UI when the window size changes
@@ -61,6 +63,7 @@ class FlxUISubState extends FlxSubState implements IFlxUIState
 	
 	public function forceScrollFactor(X:Float,Y:Float):Void {
 		if (_ui != null) {
+			var w:IFlxUIWidget; 
 			for (w in _ui.group.members) {
 				w.scrollFactor.set(X, Y);
 			}
@@ -81,6 +84,11 @@ class FlxUISubState extends FlxSubState implements IFlxUIState
 	}
 	
 	public override function create():Void
+	{
+		createFlxUISubState();
+	}
+	
+	private function createFlxUISubState()
 	{
 		if (FlxUIState.static_tongue != null) {
 			_tongue = FlxUIState.static_tongue;
@@ -143,6 +151,7 @@ class FlxUISubState extends FlxSubState implements IFlxUIState
 		if (Std.is(_parentState, FlxUIState)) {
 			reload_ui_on_resize = cast (_parentState, FlxUIState).reload_ui_on_resize;
 		}
+		return data;
 	}
 	
 	public function onCursorEvent(code:String, target:IFlxUIWidget):Void 
@@ -165,15 +174,24 @@ class FlxUISubState extends FlxSubState implements IFlxUIState
 	
 	public override function update(elapsed:Float):Void {
 		super.update(elapsed);
-		tooltips.update(elapsed);
+		if (tooltips != null) {
+			tooltips.update(elapsed);
+		}
 		if (_reload) {
 			if (_reload_countdown > 0) {
 				_reload_countdown--;
 				if (_reload_countdown == 0) {
+					_reload = false;
 					reloadUI();
 				}
 			}
 		}
+	}
+	
+	@:access(flixel.addons.ui.FlxUIState)
+	public function setUIVariable(key:String, value:String):Void
+	{
+		FlxUIState._setUIVariable(this, key, value);
 	}
 	
 	public override function destroy():Void {
@@ -190,6 +208,8 @@ class FlxUISubState extends FlxSubState implements IFlxUIState
 			remove(_ui, true);
 			_ui = null;
 		}
+		
+		_ui_vars = FlxUIState._cleanupUIVars(_ui_vars);
 		
 		super.destroy();
 	}
@@ -233,7 +253,7 @@ class FlxUISubState extends FlxSubState implements IFlxUIState
 	//in case you want to instantiate a custom class that extends FlxUI instead
 	private function createUI(data:Access = null, ptr:IEventGetter = null, superIndex_:FlxUI = null, tongue_:IFireTongue = null, liveFilePath_:String=""):FlxUI
 	{
-		return new FlxUI(data, ptr, superIndex_, tongue_, liveFilePath_);
+		return new FlxUI(data, ptr, superIndex_, tongue_, liveFilePath_, _ui_vars);
 	}
 	
 	private function reloadUI():Void {

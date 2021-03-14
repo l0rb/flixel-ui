@@ -18,6 +18,7 @@ import flixel.util.FlxColor;
 import flixel.util.FlxDestroyUtil;
 import openfl.Assets;
 import openfl.text.TextFormatAlign;
+import flixel.addons.ui.FlxUITypedButton.FlxUIButtonType;
 
 /**
  * This class extends FlxUITypedButton and has a Text label, and is thus
@@ -51,15 +52,16 @@ class FlxUIButton extends FlxUITypedButton<FlxUIText> implements ILabeled implem
 	 * @param	OnClick		The function to call whenever the button is clicked.
 	 * @param	LoadDefaultGraphics	By default it will load up with placeholder graphics. Pass false if you want to skip this (i.e. if you will provide your own graphics subsequently, can save time)
 	 * @param	LoadBlank	Load this button without ANY visible graphics, but still functions (in case you need an invisible click area)
+	 * @param	SkipResize	Skip the initial resize on construction (low-level optimization not recommended unless you know what you're doing)
 	 */
-	public function new(X:Float = 0, Y:Float = 0, ?Label:String, ?OnClick:Void->Void, ?LoadDefaultGraphics:Bool=true, ?LoadBlank:Bool=false, ?Color:FlxColor=FlxColor.WHITE)
+	public function new(X:Float = 0, Y:Float = 0, ?Label:String, ?OnClick:Void->Void, ?LoadDefaultGraphics:Bool=true, ?LoadBlank:Bool=false, ?SkipResize:Bool=false, ?Color:FlxColor=FlxColor.WHITE)
 	{
 		super(X, Y, OnClick);
 		color = Color;
 		if (Label != null)
 		{
 			//create a FlxUIText label
-			label = new FlxUIText(0, 0, 80, Label, 8);
+			label = new FlxUIText(0, 0, 80, "", 8);						//don't draw any text just yet b/c we're just going to resize & redraw it momentarily
 			label.setFormat(null, 8, 0x333333, FlxTextAlign.CENTER);
 		}
 		
@@ -68,23 +70,61 @@ class FlxUIButton extends FlxUITypedButton<FlxUIText> implements ILabeled implem
 			_no_graphic = true;
 		}
 		
+		if (label != null)
+		{
+			label.text = Label; //apply the text now before the resize call
+		}
+		
 		if (LoadDefaultGraphics)
 		{
 			resize(width, height);	//force it to be "FlxUI style"
 		}
 		else
 		{
-			if (_no_graphic == false)
+			if (_no_graphic)
 			{
-				doResize(width, height, false);
+				var blank = FlxG.bitmap.create(1, 1, FlxColor.TRANSPARENT, false, "blank_flxui_button");
+				loadGraphic(blank);
+				
+				if (!SkipResize)
+				{
+					doResize(width, height, false);
+				}
+				else
+				{
+					_setInitialLabelSize();
+				}
 				//initialize dimensions but don't initialize any graphics yet.
 				//this is ugly, but if you're about to set the graphics 
 				//yourself in a subsequent call it's much faster to skip!
 			}
 			else
 			{
-				doResize(width, height, true);
+				if (!SkipResize)
+				{
+					doResize(width, height, true);
+				}
+				else
+				{
+					_setInitialLabelSize();
+				}
 			}
+		}
+		
+		uiButtonType = FlxUIButtonType.TEXT_BUTTON;
+	}
+	
+	@:access(flixel.addons.ui.FlxUIText)
+	private function _setInitialLabelSize()
+	{
+		if (label != null)
+		{
+			var regenValue = label._regen;
+			label._regen = false;
+			label.width = width;
+			label.height = height;
+			label.fieldWidth = width;
+			label._regen = regenValue;
 		}
 	}
 	
@@ -126,15 +166,18 @@ class FlxUIButton extends FlxUITypedButton<FlxUIText> implements ILabeled implem
 	
 	public override function clone():FlxUIButton
 	{
-		var newButton = new FlxUIButton(0, 0, (label == null) ? null : label.text, onUp.callback, false);
+		var newButton = new FlxUIButton(x, y, (label == null) ? null : label.text, onUp.callback, false, true);
 		newButton.copyGraphic(cast this);
 		newButton.copyStyle(cast this);
+		newButton.has_toggle = has_toggle;
 		return newButton;
 	}
 	
-	public override function copyStyle(other:FlxUITypedButton<FlxSprite>):Void {
+	public override function copyStyle(other:FlxUITypedButton<FlxSprite>):Void
+	{
 		super.copyStyle(other);
-		if (Std.is(other, FlxUIButton)) {
+		if (Std.is(other, FlxUIButton))
+		{
 			var fuib:FlxUIButton = cast other;
 			
 			up_style = fuib.up_style;

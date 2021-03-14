@@ -167,54 +167,220 @@ class U
 	 * @return a normalized float, or NaN if not valid input
 	 */
 	
-	public static function perc_to_float(str:String):Float{			
-		if (str.lastIndexOf("%") == str.length - 1) {
+	public static function perc_to_float(str:String):Float
+	{
+		if (str.lastIndexOf("%") == str.length - 1)
+		{
 			str = str.substr(0, str.length - 1);			//trim the % off
-			var r:EReg = ~/([0-9]+)?(\.)?([0-9]*)?/;		//make sure it's just numbers & at most 1 decimal
-			if (r.match(str)) {
-				var match: { pos:Int, len:Int } = r.matchedPos();
-				if (match.pos == 0 && match.len == str.length) {
-					var perc_float:Float = Std.parseFloat(str);
-					perc_float /= 100;
-					return perc_float;
-				}
+			if (isStrPerc(str))
+			{
+				var perc_float:Float = Std.parseFloat(str);
+				perc_float /= 100;
+				return perc_float;
 			}
 		}
 		return Math.NaN;
 	}
 	
-	public static function isStrNum(str:String):Bool {
-		if (str == null || str == "") return false;
-		var r:EReg = ~/-?([0-9]+)?(\.)?([0-9]*)?/;
-			if (r.match(str)) {
-				var p: { pos:Int, len:Int } = r.matchedPos();
-				if (p.pos == 0 && p.len == str.length) {
-					return true;
+	private static function isStrPerc(str:String):Bool
+	{
+		var zero = 48;
+		var nine = 57;
+		var period = 46;
+		
+		var hasMinus = false;
+		var hasLeadingNums = false;
+		var hasTrailingNums = false;
+		var hasPeriod = false;
+		
+		var len = str.length;
+		for (i in 0...len)
+		{
+			var code = str.charCodeAt(i);
+			if (code == period)
+			{
+				if (hasPeriod) return false;
+				hasPeriod = true;
+			}
+			else if (code >= zero && code <= nine)
+			{
+				if (!hasPeriod) hasLeadingNums = true;
+				else hasTrailingNums = true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		
+		if(!hasLeadingNums && !hasTrailingNums) return false;
+		
+		return true; 
+	}
+	
+	public static function isFormula(str:String):Bool
+	{
+		var zero = 48;
+		var nine = 57;
+		var A = 65;
+		var Z = 90;
+		var underscore = 95;
+		var a = 97;
+		var z = 122;
+		var period = 46;
+		
+		var hasLeadingChars = false;
+		var hasTrailingChars = false;
+		var hasPeriod = false;
+		
+		var len = str.length;
+		for (i in 0...len)
+		{
+			var code = str.charCodeAt(i);
+			
+			if (code == period)
+			{
+				if (!hasLeadingChars) return false;
+				if (hasPeriod) return false;
+				hasPeriod = true;
+			}
+			else if (
+				     (code >= zero && code <= nine) ||
+				     (code >= A    && code <= Z   ) ||
+				     (code >= a    && code <= z   ) ||
+				     (code == underscore)
+					)
+			{
+				if (!hasPeriod)
+				{
+					hasLeadingChars = true;
 				}
+				else
+				{
+					hasTrailingChars = true;
+				}
+			}
+			else
+			{
+				if (hasLeadingChars && hasPeriod && hasTrailingChars) return true;
+				hasTrailingChars = false;
+				hasLeadingChars = false;
+				hasPeriod = false;
+			}
+			
+			if (hasLeadingChars && hasPeriod && hasTrailingChars) return true;
 		}
+		
+		if (hasLeadingChars && hasPeriod && hasTrailingChars) return true;
+		
 		return false;
 	}
 	
-	public static function isStrInt(str:String):Bool {
-		var r:EReg = ~/[0-9]+/;
-			if (r.match(str)) {
-			var p: { pos:Int, len:Int } = r.matchedPos();
-			if (p.pos == 0 && p.len == str.length) {
-				return true;
+	public static function isStrNum(str:String):Bool
+	{
+		var zero = 48;
+		var nine = 57;
+		var period = 46;
+		var minus = 45;
+		
+		var hasMinus = false;
+		var hasLeadingNums = false;
+		var hasTrailingNums = false;
+		var hasPeriod = false;
+		
+		var len = str.length;
+		for (i in 0...len)
+		{
+			var code = str.charCodeAt(i);
+			if (code == minus)
+			{
+				if (i != 0) return false;
+				if (hasMinus) return false;
+				hasMinus = true;
+			}
+			else if (code == period)
+			{
+				if (hasPeriod) return false;
+                hasPeriod = true;
+			}
+			else if (code >= zero && code <= nine)
+			{
+				if (!hasPeriod) hasLeadingNums = true;
+				else hasTrailingNums = true;
+			}
+			else
+			{
+				return false;
 			}
 		}
-		return false;
+		
+		if(!hasLeadingNums && !hasTrailingNums) return false;
+		
+		return true;  
 	}
 	
-	public static function isStrFloat(str:String):Bool {
-		var r:EReg = ~/[0-9]+\.[0-9]+/;
-			if (r.match(str)) {
-			var p: { pos:Int, len:Int } = r.matchedPos();
-			if (p.pos == 0 && p.len == str.length) {
-				return true;
+	public static function isStrInt(str:String):Bool
+	{
+		var zero = 48;
+		var nine = 57;
+		
+		var hasNums = false;
+		
+		var len = str.length;
+		for (i in 0...len)
+		{
+			var code = str.charCodeAt(i);
+			if (code >= zero && code <= nine)
+			{
+				hasNums = true;
+			}
+			else
+			{
+				return false;
 			}
 		}
-		return false;
+		
+		if (!hasNums) return false;
+		
+		return true;
+	}
+	
+	public static function isStrFloat(str:String):Bool
+	{
+		var zero = 48;
+		var nine = 57;
+		var period = 46;
+		
+		var hasLeadingNums = false;
+		var hasTrailingNums = false;
+		var hasPeriod = false;
+		
+		var len = str.length;
+		for (i in 0...len)
+		{
+			var code = str.charCodeAt(i);
+			if (code == period)
+			{
+				if (hasPeriod) return false;
+                if (!hasLeadingNums) return false;
+				hasPeriod = true;
+			}
+			else if (code >= zero && code <= nine)
+			{
+				if (!hasPeriod) hasLeadingNums = true;
+				else hasTrailingNums = true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		
+		if (!hasPeriod) return false;
+		if (!hasLeadingNums) return false;
+		if (!hasTrailingNums) return false;
+		
+		return true;
 	}
 	
 	/**
@@ -660,8 +826,75 @@ class U
 		return new Access(copyXml(fast.x));
 	}
 	
-	public static inline function copyXml(data:Xml):Xml {
-		return Xml.parse(data.toString()).firstElement();
+	@:access(haxe.xml.Xml)
+	public static inline function copyXml(data:Xml, parent:Xml = null):Xml
+	{
+		var c:Xml = null;
+        if (data.nodeType == Xml.Element)
+		{
+			c = Xml.createElement(data.nodeName);
+            for (att in data.attributes())
+			{
+				c.set(att, data.get(att));
+			}
+			for (el in data.elements())
+			{
+				c.addChild(copyXml(el,c));
+			}
+		}
+		else if(data.nodeType == Xml.PCData)
+        {
+        	c = Xml.createPCData(data.nodeValue);        
+        }
+        else if(data.nodeType == Xml.CData)
+        {
+            c = Xml.createCData(data.nodeValue);
+        }
+        else if(data.nodeType == Xml.Comment)
+        {
+            c = Xml.createComment(data.nodeValue);
+        }
+        else if(data.nodeType == Xml.DocType)
+        {
+            c = Xml.createDocType(data.nodeValue);
+        }
+        else if(data.nodeType == Xml.ProcessingInstruction)
+        {
+            c = Xml.createProcessingInstruction(data.nodeValue);
+        }
+		else if(data.nodeType == Xml.Document)
+        {
+            c = Xml.createDocument();
+			for (el in data.elements())
+			{
+				c.addChild(copyXml(el,c));
+			}
+        }
+        @:privateAccess c.parent = parent;
+		return c;
+	}
+	
+	public static function cheapStringChop(str:String, pattern:String):String
+	{
+		var patternI = str.indexOf(pattern);
+        var l = str.length;
+        var pl = pattern.length;
+		if (patternI != -1)
+		{
+			if (patternI == 0)
+			{
+                return str.substr(pl,l-pl);
+			}
+            else if(patternI == l-pl)
+            {
+                return str.substr(0,l-pl);
+            }
+            else
+            {
+                return str.substr(0,patternI) + str.substr(patternI+pl,l-(patternI+pl));
+            }
+		}
+        return str;
 	}
 
 	#if sys
@@ -770,7 +1003,7 @@ class U
 		return _default;
 	}
 	
-	public static function xml(id:String, extension:String = "xml",getAccess:Bool=true,dir="assets/xml/"):Dynamic{
+	public static function xml(id:String, extension:String = "xml",getAccess:Bool=true,dir="assets/xml/",getFirstElement:Bool=true):Dynamic{
 		if (id.indexOf("raw:") == 0 || id.indexOf("RAW:") == 0)
 		{
 			id = id.substr(4, id.length - 4);
@@ -790,11 +1023,15 @@ class U
 			return null;
 		}
 		var the_xml:Xml = Xml.parse(str);
-		if(getAccess){
-			var fast:Access = new Access(the_xml.firstElement());
+		if (getFirstElement)
+		{
+			the_xml = the_xml.firstElement();
+		}
+		if (getAccess){
+			var fast:Access = new Access(the_xml);
 			return fast;
 		}else{
-			return the_xml.firstElement();
+			return the_xml;
 		}
 	}
 	
@@ -961,7 +1198,29 @@ class U
 				return cg.bitmap;
 			}
 		}
-		return Assets.getBitmapData(str, false);
+		return Assets.getBitmapData(str, true);
+	}
+	
+	public static function combineTiles(arr:Array<BitmapData>):BitmapData
+	{
+		var w:Int = 0;
+		var h:Int = 0;
+		for (bmp in arr)
+		{
+			if (bmp == null) continue;
+			w += bmp.width;
+			h = Std.int(Math.max(bmp.height, h));
+		}
+		
+		var b:BitmapData = new BitmapData(w, h, true);
+		var pt = new Point();
+		for (bmp in arr)
+		{
+			if (bmp == null) continue;
+			b.copyPixels(bmp, bmp.rect, pt);
+			pt.x += bmp.width;
+		}
+		return b;
 	}
 	
 	public static function checkHaxedef(str:String):Bool {
@@ -1073,6 +1332,7 @@ class U
 	public static function copy_shallow_arr(src:Array<Dynamic>):Array<Dynamic> {
 		if (src == null) { return null;}
 		var arr:Array<Dynamic> = new Array<Dynamic>();
+		var thing:Dynamic;
 		if (src == null){ 
 			return arr;
 		}
@@ -1098,6 +1358,7 @@ class U
 	public static function copy_shallow_arr_i(src:Array<Int>):Array<Int> {
 		if (src == null) { return null;}
 		var arr:Array<Int> = new Array<Int>();
+		var thing:Int;
 		for (thing in src) {
 			arr.push(thing);
 		}
@@ -1107,6 +1368,7 @@ class U
 	public static function copy_shallow_arr_str(src:Array<String>):Array<String> {
 		if (src == null) { return null;}
 		var arr:Array<String> = new Array<String>();
+		var thing:String;
 		for (thing in src) {
 			arr.push(thing);
 		}
@@ -1116,7 +1378,7 @@ class U
 	public static function FU_(str:String):String {
 		var arr:Array<String> = str.split(" ");
 		var str:String="";
-		for (i in 0...arr.length){//= 0; i < arr.length; i++) {
+		for (i in 0...arr.length){
 			str += FU(arr[i]);
 			if (i != arr.length - 1) {
 				str += " ";
@@ -1171,13 +1433,18 @@ class U
 	
 	public static function scaleTileBmp(orig_id:String, scale:Float, origW:Int, origH:Int, W:Int = -1, H:Int = -1, smooth:Bool = true):BitmapData
 	{
-		var orig:BitmapData = Assets.getBitmapData(orig_id, false);
-		if (orig == null) {
-			if (FlxG.bitmap.checkCache(orig_id)) {
-				orig = FlxG.bitmap.get(orig_id).bitmap;
-			}else{
-				return null;		//indicates failure
-			}
+		var orig:BitmapData = null;
+		if (FlxG.bitmap.checkCache(orig_id))
+		{
+			orig = FlxG.bitmap.get(orig_id).bitmap;
+		}
+		else
+		{
+			orig = Assets.getBitmapData(orig_id, false);
+		}
+		if (orig == null)
+		{
+			return null;		//indicates failure
 		}
 		
 		var widthInTiles:Int = Std.int(orig.width / origW);
@@ -1261,7 +1528,17 @@ class U
 	public static function loadScaledImage(src:String,W:Float,H:Float,smooth:Bool=true):String
 	{
 		var bmpSrc:String = gfx(src);
-		var	testBmp:BitmapData = Assets.getBitmapData(bmpSrc, false);
+		
+		var	testBmp:BitmapData = null;
+		
+		if (FlxG.bitmap.checkCache(bmpSrc))
+		{
+			testBmp = FlxG.bitmap.get(bmpSrc).bitmap;
+		}
+		else
+		{
+			testBmp = Assets.getBitmapData(bmpSrc, false);
+		}
 		
 		if (testBmp != null)	//if the master asset exists
 		{
@@ -1362,7 +1639,7 @@ class U
 			//if final size != master asset size, we're going to scale it
 			if (Math.abs(Scale-1.00) > 0.001) 
 			{
-				var scaleKey:String = bmpSrc +"_ScaleX" + Scale;	//generate a unique scaled asset key
+				var scaleKey:String = bmpSrc +"_scalex" + Scale;	//generate a unique scaled asset key
 				
 				//if it doesn't exist yet, create it
 				if (FlxG.bitmap.get(scaleKey) == null)
@@ -1388,7 +1665,7 @@ class U
 						temp.dispose();
 					}
 					
-					FlxG.bitmap.add(scaledBmp, true, scaleKey);			//store it by the unique key
+					var finalKey = FlxG.bitmap.add(scaledBmp, true, scaleKey);			//store it by the unique key
 				}
 				
 				return scaleKey;										//return the final scaled key
@@ -1460,6 +1737,7 @@ class U
 	public static function bmpToArrayIntLayer(color_index:Int, bd:BitmapData):Array<Int>{
 		//Walk image and export pixel values
 		var p:Int;
+		var last_p:Int = -1;
 		var arr:Array<Int> = [];
 		var w:Int = bd.width;
 		var h:Int = bd.height;
@@ -1495,6 +1773,7 @@ class U
 		
 		//Walk image and export pixel values
 		var p:Int;
+		var last_p:Int=-1;
 		var csv:String = "";
 		var w:Int = bd.width;
 		var h:Int = bd.height;
@@ -1543,7 +1822,14 @@ class U
 		
 		if (str != null && str.length > 4 && str.indexOf(suffix) != -1)
 		{
-			str = str.substr(0, str.length - 4);	//strip off the suffix if it exists
+			var finalString = str.substr(str.length - suffix.length, suffix.length);
+			if(finalString == suffix){
+				str = str.substr(0, str.length - 4);	//strip off the suffix if it exists
+			}
+			else
+			{
+				suffix = "";
+			}
 		}
 		if (str.indexOf("raw:") == 0 || str.indexOf("RAW:") == 0) {
 			str = str.substr(4, str.length - 4);
@@ -1661,6 +1947,12 @@ class U
 	}
 	
 	public static inline function obj_direction(a:FlxObject, b:FlxObject):FlxPoint {
+		var ax:Float = a.x + (a.width / 2);
+		var ay:Float = a.y + (a.height / 2);
+		
+		var bx:Float = b.x + (b.width / 2);
+		var by:Float = b.y + (b.height / 2);
+		
 		var dx:Float = a.x - b.x;
 		var dy:Float = a.y - b.y;
 		

@@ -18,11 +18,12 @@ import openfl.text.TextFormat;
  */
 class FlxUITooltip extends FlxUIGroup
 {
-
 	public var style(default, set):FlxUITooltipStyle;
 	public var anchor(default, set):Anchor;
 	public var title(default, set):String;
 	public var body(default, set):String;
+	
+	public static var persistGraphics:Bool = true;
 	
 	public function new(Width:Int, Height:Int, ?Anchor_:Anchor, ?Style:FlxUITooltipStyle)
 	{
@@ -49,6 +50,8 @@ class FlxUITooltip extends FlxUIGroup
 		y = 0;
 		_bkg.x = 0;
 		_bkg.y = 0;
+		_bkgBorder.x = 0;
+		_bkgBorder.y = 0;
 		_arrow.x = 0;
 		_arrow.y = 0;
 		_arrowBkg.x = 0;
@@ -105,8 +108,8 @@ class FlxUITooltip extends FlxUIGroup
 			_bodyText.y = Std.int(_titleText.y + titleHeight + style.bodyOffset.y);
 		}
 		
-		var W:Int = Std.int(_bkg.width);
-		var H:Int = Std.int(_bkg.height);
+		var W:Int = Std.int(_bkgBorder.width);
+		var H:Int = Std.int(_bkgBorder.height);
 		
 		if (AutoSizeHorizontal)
 		{
@@ -146,7 +149,7 @@ class FlxUITooltip extends FlxUIGroup
 		_anchorArrow.x.offset = Std.int(_anchorArrow.x.offset);
 		_anchorArrow.y.offset = Std.int(_anchorArrow.y.offset);
 		
-		_anchorArrow.anchorThing(_arrow, _bkg);	//anchor arrow to background
+		_anchorArrow.anchorThing(_arrow, _bkgBorder);	//anchor arrow to background
 		
 		_anchorArrow.x.offset = oldOffX;
 		_anchorArrow.y.offset = oldOffY;
@@ -154,7 +157,7 @@ class FlxUITooltip extends FlxUIGroup
 		if (_arrow.x < 0)
 		{
 			var xx:Int = Std.int(Math.abs(_arrow.x));
-			_bkg.x += xx;
+			_bkgBorder.x += xx;
 			_titleText.x += xx;
 			_bodyText.x += xx;
 			_arrow.x = 0;
@@ -162,7 +165,7 @@ class FlxUITooltip extends FlxUIGroup
 		if (_arrow.y < 0)
 		{
 			var yy:Int = Std.int(Math.abs(_arrow.y));
-			_bkg.y += yy;
+			_bkgBorder.y += yy;
 			_titleText.y += yy;
 			_bodyText.y += yy;
 			_arrow.y = 0;
@@ -189,19 +192,62 @@ class FlxUITooltip extends FlxUIGroup
 		
 		if (_titleText.text == "") 
 		{
-			_titleText.x = _bkg.x;
-			_titleText.y = _bkg.y;
-			_titleText.width = _bkg.width;
+			_titleText.x = _bkgBorder.x;
+			_titleText.y = _bkgBorder.y;
+			_titleText.width = _bkgBorder.width;
 		}
 		
 		if (_bodyText.text == "")
 		{
-			_bodyText.x = _bkg.x;
-			_bodyText.y = _bkg.y;
-			_bodyText.width = _bkg.width;
+			_bodyText.x = _bkgBorder.x;
+			_bodyText.y = _bkgBorder.y;
+			_bodyText.width = _bkgBorder.width;
 		}
 		
 		anchor.anchorThing(this, obj);			//anchor entire group to object
+		
+		var reAnchor = false;
+		var yoffset = 0.0;
+		var xoffset = 0.0;
+		if (_bkgBorder.y < 0)
+		{
+			yoffset = Math.abs(_bkgBorder.y);
+			reAnchor = true;
+		}
+		else if (_bkgBorder.y + _bkgBorder.height > FlxG.height)
+		{
+			yoffset = (_bkgBorder.y + _bkgBorder.height - FlxG.height);
+			reAnchor = true;
+		}
+		else if (_bkgBorder.x < 0)
+		{
+			xoffset = Math.abs(_bkgBorder.x);
+			reAnchor = true;
+		}
+		else if (_bkgBorder.x + _bkgBorder.width > FlxG.width)
+		{
+			xoffset = (_bkgBorder.x + _bkgBorder.width - FlxG.width);
+			reAnchor = true;
+		}
+		
+		if (reAnchor)
+		{
+			_arrowBkg.x += xoffset;
+			_arrowBkg.y += yoffset;
+			_titleText.x += xoffset;
+			_titleText.y += yoffset;
+			_bodyText.x += xoffset;
+			_bodyText.y += yoffset;
+			_bkgBorder.x += xoffset;
+			_bkgBorder.y += yoffset;
+			_bkg.x += xoffset;
+			_bkg.y += yoffset;
+			if (ShowArrow)
+			{
+				_arrow.visible = true;
+				_arrowBkg.visible = true;
+			}
+		}
 		
 		x = Std.int(x);
 		y = Std.int(y);
@@ -211,8 +257,10 @@ class FlxUITooltip extends FlxUIGroup
 		
 		_titleText.x = Std.int(_titleText.x);
 		_bodyText.x = Std.int(_bodyText.x);
-		_bkg.x = Std.int(_bkg.x);
-		_bkg.y = Std.int(_bkg.y);
+		_bkgBorder.x = Std.int(_bkgBorder.x);
+		_bkgBorder.y = Std.int(_bkgBorder.y);
+		_bkg.x = Std.int(_bkgBorder.x + style.borderSize);
+		_bkg.y = Std.int(_bkgBorder.y + style.borderSize);
 		_arrowBkg.x = Std.int(_arrowBkg.x);
 		_arrowBkg.y = Std.int(_arrowBkg.y);
 		_arrow.x = Std.int(_arrow.x);
@@ -255,6 +303,11 @@ class FlxUITooltip extends FlxUIGroup
 		active = false;
 	}
 	
+	public function showArrow(b:Bool):Void
+	{
+		_arrow.visible = _arrowBkg.visible = b;
+	}
+	
 	/***SETTERS***/
 	
 	public function set_anchor(a:Anchor):Anchor
@@ -288,6 +341,7 @@ class FlxUITooltip extends FlxUIGroup
 	
 	/*************/
 	
+	private var _bkgBorder:FlxSprite;
 	private var _bkg:FlxSprite;
 	private var _titleText:FlxUIText;
 	private var _bodyText:FlxUIText;
@@ -304,7 +358,11 @@ class FlxUITooltip extends FlxUIGroup
 		var newBody = _bodyText == null;
 		if (newBkg)
 		{
+			makePix();
 			_bkg = new FlxSprite();
+			_bkg.loadGraphic("white_pix_tt");
+			_bkgBorder = new FlxSprite();
+			_bkgBorder.loadGraphic("white_pix_tt");
 		}
 		if (newArrow)
 		{
@@ -340,13 +398,33 @@ class FlxUITooltip extends FlxUIGroup
 		
 		//load the arrow
 		_arrow.color = Style.background;
-		var test = FlxG.bitmap.add(Style.arrow);
 		if (Style.arrow == null)
 		{
 			Style.arrow = FlxUIAssets.IMG_TOOLTIP_ARROW;
-			FlxG.bitmap.add(Style.arrow);
+			if (FlxG.bitmap.checkCache(FlxUIAssets.IMG_TOOLTIP_ARROW) == false)
+			{
+				var gfx = FlxG.bitmap.add(FlxUIAssets.IMG_TOOLTIP_ARROW, false, FlxUIAssets.IMG_TOOLTIP_ARROW);
+				gfx.persist = true;
+				gfx.destroyOnNoUse = false;
+			}
+			else
+			{
+				var gfx = FlxG.bitmap.get(FlxUIAssets.IMG_TOOLTIP_ARROW);
+				if (gfx != null)
+				{
+					Style.arrow = gfx;
+				}
+			}
 		}
-		_arrow.loadGraphic(Style.arrow, true, test.height, test.height);
+		
+		var test = FlxG.bitmap.get(Style.arrow);
+		if (_arrow != null)
+		{
+			if (Style != null && Style.arrow != null && test != null)
+			{
+				_arrow.loadGraphic(Style.arrow, true, test.height, test.height);
+			}
+		}
 		
 		if (newArrow)
 		{
@@ -369,6 +447,7 @@ class FlxUITooltip extends FlxUIGroup
 		
 		if (newBkg)
 		{
+			add(_bkgBorder);
 			add(_bkg);
 		}
 		
@@ -388,9 +467,19 @@ class FlxUITooltip extends FlxUIGroup
 		}
 	}
 	
+	private function makePix():Void
+	{
+		if (FlxG.bitmap.checkCache("white_pix_tt") == false)
+		{
+			var white:BitmapData = new BitmapData(1, 1, false, 0xFFFFFF);
+			FlxG.bitmap.add(white, true, "white_pix_tt");
+		}
+	}
+	
 	private function refreshBkg(Width:Int,Height:Int,Style:FlxUITooltipStyle):Void
 	{
 		//load the background
+		/*
 		var key = getStyleKey(Width, Height, Style);
 		if (!FlxG.bitmap.checkCache(key))
 		{
@@ -407,6 +496,19 @@ class FlxUITooltip extends FlxUIGroup
 			FlxG.bitmap.add(pix, true, key);
 		}
 		_bkg.loadGraphic(key);
+		*/
+		
+		_bkgBorder.color = Style.borderColor;
+		_bkg.color = Style.background;
+		
+		_bkgBorder.visible = Style.borderSize > 0 && Style.borderColor.alpha > 0;
+		_bkgBorder.scale.x = Std.int(Width);
+		_bkgBorder.scale.y = Std.int(Height);
+		_bkgBorder.updateHitbox();
+		_bkg.scale.x = Std.int(Width - Style.borderSize * 2);
+		_bkg.scale.y = Std.int(Height - Style.borderSize * 2);
+		_bkg.updateHitbox();
+		
 	}
 	
 	private function getStyleKey(W:Int,H:Int,Style:FlxUITooltipStyle):String

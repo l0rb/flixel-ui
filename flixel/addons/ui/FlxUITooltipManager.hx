@@ -6,10 +6,14 @@ import flixel.addons.ui.interfaces.IFlxUIState;
 import flixel.addons.ui.interfaces.IFlxUIWidget;
 import flixel.FlxObject;
 import flixel.FlxSprite;
+import flixel.graphics.FlxGraphic;
 import flixel.math.FlxPoint;
 import flixel.util.FlxArrayUtil;
+import flixel.util.FlxColor;
 import flixel.util.FlxDestroyUtil;
 import flixel.util.FlxDestroyUtil.IFlxDestroyable;
+import flixel.addons.ui.FlxUITypedButton.FlxUIButtonType;
+import openfl.display.BitmapData;
 
 /**
  * ...
@@ -59,6 +63,8 @@ class FlxUITooltipManager implements IFlxDestroyable
 		lastPosition = new FlxPoint(0, 0);
 		defaultAnchor = tooltip.anchor.clone();
 		defaultStyle = FlxUITooltip.cloneStyle(tooltip.style);
+		dummy = new FlxUISprite();
+		dummy.visible = false;
 	}
 	
 	@:access(flixel.addons.ui.FlxUI)
@@ -85,7 +91,12 @@ class FlxUITooltipManager implements IFlxDestroyable
 	public function destroy()
 	{
 		FlxDestroyUtil.destroyArray(list); list = null;
-		tooltip = null;
+		if (tooltip != null)
+		{
+			tooltip.destroy();
+			tooltip = null;
+		}
+		fixedPosition = null;
 		lastPosition = null;
 		state = null;
 		subState = null;
@@ -103,6 +114,24 @@ class FlxUITooltipManager implements IFlxDestroyable
 			var entry = list.pop();
 			if (entry != null)
 			{
+				if (entry.deleteButtonOnClear)
+				{
+					if (state != null)
+					{
+						state.remove(cast entry.btn);
+						state.remove(cast dummy);
+					}
+					else if (subState != null)
+					{
+						subState.remove(cast entry.btn);
+						subState.remove(cast dummy);
+					}
+					var btn:FlxObject = cast entry.btn;
+					btn.destroy();
+					entry.btn = null;
+					entry.btnSpr = null;
+					entry.btnTxt = null;
+				}
 				entry.destroy();
 			}
 		}
@@ -114,7 +143,7 @@ class FlxUITooltipManager implements IFlxDestroyable
 	
 	public function hideCurrent()
 	{
-		if (current > 0)
+		if (current >= 0)
 		{
 			hide(current);
 		}
@@ -123,7 +152,7 @@ class FlxUITooltipManager implements IFlxDestroyable
 	/** @since 2.1.0 */
 	public function isVisible():Bool
 	{
-		return current > 0;
+		return current >= 0;
 	}
 	
 	/**
@@ -181,6 +210,13 @@ class FlxUITooltipManager implements IFlxDestroyable
 		}
 	}
 	
+	public function unstickyAll():Void
+	{
+		for (i in 0...list.length){
+			list[i].sticky = false;
+		}
+	}
+	
 	/**
 	 * Show the tooltip for the given object, if one exists
 	 * @param	thing	the thing you want to display a tooltip for
@@ -221,6 +257,7 @@ class FlxUITooltipManager implements IFlxDestroyable
 			entry.enabled = enabled;
 			return true;
 		}
+		
 		return false;
 	}
 	
@@ -235,6 +272,8 @@ class FlxUITooltipManager implements IFlxDestroyable
 	
 	public function add(thing:FlxObject, data:FlxUITooltipData):Void
 	{
+		if (thing == null) return;
+		
 		if (_init) {
 			data.style = FlxUITooltip.styleFix(data.style, defaultStyle);		//replace null values with sensible defaults
 		}
@@ -268,8 +307,18 @@ class FlxUITooltipManager implements IFlxDestroyable
 				//doesn't exist, make a new one
 				
 				//create a blank button to process the tooltip
-				var b = new FlxUIButton(0, 0, "", null, false, true);
-				b.resize(thing.width, thing.height);
+				var b = new FlxUIButton(0, 0, null, null, false, true, true);
+				b.autoResizeLabel = false;
+				b.autoCenterLabel = false;
+				if (FlxG.bitmap.checkCache("tooltip_blank") == false)
+				{
+					var bmpBlank = new BitmapData(1, 1, true, FlxColor.TRANSPARENT);
+					FlxG.bitmap.add(bmpBlank, "tooltip_blank");
+				}
+				b.loadGraphic("tooltip_blank", false, 1, 1);
+				b.labelAlphas = [0, 0, 0, 0];
+				b.doResize(thing.width, thing.height, false);
+				b.moves = false;
 				
 				btn = b;
 				//btn = new FlxUIButton(0, 0, "", null, false, true);
@@ -292,7 +341,11 @@ class FlxUITooltipManager implements IFlxDestroyable
 				}
 				
 				//add it to the list
-				list.push(new FlxUITooltipEntry(btn, data, thing));
+				var entry = new FlxUITooltipEntry(btn, data, thing);
+				
+				//this button is created ONLY for this tooltip, so delete it when we kill the tooltip
+				entry.deleteButtonOnClear = true;
+				list.push(entry);
 			}
 			else
 			{
@@ -344,8 +397,41 @@ class FlxUITooltipManager implements IFlxDestroyable
 		//iterate over all our buttons and watch their states
 		for (i in 0...list.length)
 		{
-			var btn = list[i].btn;
-			var obj = list[i].obj;
+			var btn:IFlxUIButton = list[i].btn;
+			
+			var btnObj:FlxObject = null;
+			
+			var uibtn:FlxUIButton;
+			var sprbtn:FlxUISpriteButton;
+			
+			var btnVisible = false;
+			var btnJustMousedOut = false;
+			var btnJustMousedOver = false;
+			var btnMouseIsOut = false;
+			var btnMouseIsOver = false;
+			
+			if (list[i].btnTxt != null)
+			{
+				uibtn = list[i].btnTxt;
+				btnObj = uibtn;
+				btnVisible = uibtn.visible;
+				btnJustMousedOut = uibtn.justMousedOut;
+				btnJustMousedOver = uibtn.justMousedOver;
+				btnMouseIsOut = uibtn.mouseIsOut;
+				btnMouseIsOver = uibtn.mouseIsOver;
+			}
+			else if (list[i].btnSpr != null)
+			{
+				sprbtn = list[i].btnSpr;
+				btnObj = sprbtn;
+				btnVisible = sprbtn.visible;
+				btnJustMousedOut = sprbtn.justMousedOut;
+				btnJustMousedOver = sprbtn.justMousedOver;
+				btnMouseIsOut = sprbtn.mouseIsOut;
+				btnMouseIsOver = sprbtn.mouseIsOver;
+			}
+			
+			var obj:FlxObject = list[i].obj;
 			
 			if (list[i].enabled == false)
 			{
@@ -359,21 +445,21 @@ class FlxUITooltipManager implements IFlxDestroyable
 			
 			if (obj != null)
 			{
-				btn.x = obj.x;
-				btn.y = obj.y;
-				btn.width = obj.width;
-				btn.height = obj.height;
-				btn.visible = obj.visible;
+				btnObj.x = obj.x;
+				btnObj.y = obj.y;
+				btnObj.width = obj.width;
+				btnObj.height = obj.height;
+				btnObj.visible = obj.visible;
 			}
 			
-			if (list[i].sticky == false && (false == btn.visible || btn.justMousedOut || btn.mouseIsOut))
+			if (list[i].sticky == false && (false == btnVisible || btnJustMousedOut || btnMouseIsOut))
 			{
 				list[i].count = 0;
 				hide(i);
 			}
-			else if (btn.justMousedOver || btn.mouseIsOver)
+			else if (btnJustMousedOver || btnMouseIsOver)
 			{
-				if (btn.mouseIsOver)
+				if (btnMouseIsOver)
 				{
 					list[i].count += elapsed;
 				}
@@ -403,6 +489,8 @@ class FlxUITooltipManager implements IFlxDestroyable
 	/**we actually only ever use one tooltip object :) **/
 	private var tooltip:FlxUITooltip;
 	
+	private var dummy:FlxUISprite;
+	
 	/**the current tooltip**/
 	private var current:Int = -1;
 	private var lastPosition:FlxPoint;
@@ -417,11 +505,13 @@ class FlxUITooltipManager implements IFlxDestroyable
 			tooltip.hide();
 			if (state != null)
 			{
-				state.remove(tooltip, true);
+				state.remove(tooltip);
+				state.remove(dummy);
 			}
 			if (subState != null)
 			{
-				subState.remove(tooltip, true);
+				subState.remove(tooltip);
+				subState.remove(dummy);
 			}
 			current = -1;
 		}
@@ -430,11 +520,30 @@ class FlxUITooltipManager implements IFlxDestroyable
 	private function findThing(thing:FlxObject):Int
 	{
 		if (thing == null) return -1;
+		if (list == null) return -1;
+		
+		//Access path: look for the thing itself
 		for (entry in list)
 		{
-			if (entry.obj == thing || (Std.is(thing,IFlxUIButton) && cast(thing,IFlxUIButton) == entry.btn))
+			if (entry == null) continue;
+			if (entry.obj == thing)
 			{
 				return list.indexOf(entry);
+			}
+		}
+		
+		//Slow path: check if the thing is a button and if any entry has the button
+		//We do this after the first check for speed purposes -- Std.is & casting is way more expensive than just iterating the list twice
+		if (Std.is(thing, IFlxUIButton))
+		{
+			var ifb:IFlxUIButton = cast thing;
+			for (entry in list)
+			{
+				if (entry == null) continue;
+				if (ifb == entry.btn)
+				{
+					return list.indexOf(entry);
+				}
 			}
 		}
 		
@@ -542,10 +651,12 @@ class FlxUITooltipManager implements IFlxDestroyable
 		if (state != null)
 		{
 			state.add(tooltip);
+			state.add(dummy);
 		}
 		if (subState != null)
 		{
 			subState.add(tooltip);
+			subState.add(dummy);
 		}
 		
 		tooltip.show(cast btn, data.title, data.body, autoSizeVertical, autoSizeHorizontal);
@@ -593,7 +704,7 @@ class FlxUITooltipManager implements IFlxDestroyable
 			{
 				anchor = tooltip.anchor;
 			}
-			anchor.getFlipped(flipX, flipY, anchor);
+			anchor = anchor.getFlipped(flipX, flipY);
 			return true;
 		}
 		
@@ -611,9 +722,12 @@ private class FlxUITooltipEntry implements IFlxDestroyable
 {
 	public var obj:FlxObject;
 	public var btn:IFlxUIButton;
+	public var btnSpr:FlxUISpriteButton;
+	public var btnTxt:FlxUIButton;
 	public var count:Float;
 	public var data:FlxUITooltipData;
 	public var enabled:Bool;
+	public var deleteButtonOnClear:Bool;
 	
 	/**
 	 * Intentionally shown by the programmer, when shown will only unshow when explicitly hidden or another tooltip is shown
@@ -623,6 +737,16 @@ private class FlxUITooltipEntry implements IFlxDestroyable
 	public function new(Btn:IFlxUIButton, Data:FlxUITooltipData, ?Obj:FlxObject)
 	{
 		btn = Btn;
+		if (Btn.uiButtonType == FlxUIButtonType.SPRITE_BUTTON)
+		{
+			btnSpr = cast btn;
+			btnTxt = null;
+		}
+		else if (Btn.uiButtonType == FlxUIButtonType.TEXT_BUTTON)
+		{
+			btnTxt = cast btn;
+			btnSpr = null;
+		}
 		data = Data;
 		obj = Obj;
 		count = 0;
