@@ -12,6 +12,7 @@ import flixel.math.FlxPoint;
 import flixel.math.FlxRect;
 import flixel.util.FlxColor;
 import flixel.util.FlxDestroyUtil;
+import flixel.group.FlxSpriteGroup;
 import openfl.Assets;
 
 /**
@@ -77,7 +78,7 @@ class FlxUI9SliceSprite extends FlxUISprite implements IResizable implements IFl
 	 * @param	Color	Color to tint this graphic to.  (White has no effect.)
 	 */
 	
-	public function new(X:Float, Y:Float, Graphic:Dynamic, Rect:Rectangle, Slice9:Array<Int>=null, Tile:Int=TILE_NONE, Smooth:Bool=false, Id:String="",Ratio:Float=-1,Resize_point=null,Resize_axis:Int=FlxUISprite.RESIZE_RATIO_Y,DeferResize:Bool=false,UseSubSprites:Bool=false,Color:Flxcolor=FlxColor.WHITE) 
+	public function new(X:Float, Y:Float, Graphic:Dynamic, Rect:Rectangle, Slice9:Array<Int>=null, Tile:Int=TILE_NONE, Smooth:Bool=false, Id:String="",Ratio:Float=-1,Resize_point=null,Resize_axis:Int=FlxUISprite.RESIZE_RATIO_Y,DeferResize:Bool=false,UseSubSprites:Bool=false,Color:FlxColor=FlxColor.WHITE) 
 	{
 		super(X, Y, null);
 		color = Color;

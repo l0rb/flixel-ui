@@ -1067,7 +1067,6 @@ class FlxUICursor extends FlxUISprite
 						FlxG.stage.dispatchEvent(new MouseEvent(MouseEvent.CLICK, true, false, rawMouseX, rawMouseY, FlxG.stage));
 				#end
 			}
-		}
 		#end
 		
 		if (callback != null) {

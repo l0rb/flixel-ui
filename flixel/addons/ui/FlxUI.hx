@@ -5188,7 +5188,7 @@ class FlxUI extends FlxUIGroup implements IEventGetter
 	{
 		var arr:Array<Dynamic> = null;
 		
-		var operator:String = "";
+		var op:String = "";
 		var operand:Float = 0;
 		var hasPoint = false;
 		
