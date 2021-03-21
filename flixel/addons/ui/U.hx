@@ -897,6 +897,18 @@ class U
         return str;
 	}
 
+	public static inline function cheap2Split(str:String,delimeter:String):Array<String>
+	{
+		var i = str.indexOf(delimeter);
+		if (i != -1)
+		{
+			var prop = str.substr(i+1,str.length-(i+1));
+			str = str.substr(0, i);
+			return [str, prop];
+		}
+		return [str];
+	}
+	
 	#if sys
 		public static function readXml(path:String):Xml {
 			if (FileSystem.exists(path)) {

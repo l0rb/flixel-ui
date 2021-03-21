@@ -5,14 +5,19 @@ import flash.display.Sprite;
 import flash.geom.Matrix;
 import flash.geom.Point;
 import flash.geom.Rectangle;
+import flixel.FlxSprite;
 import flixel.addons.ui.interfaces.IFlxUIWidget;
 import flixel.addons.ui.interfaces.IResizable;
 import flixel.graphics.FlxGraphic;
+import flixel.group.FlxSpriteGroup;
+import flixel.math.FlxMath;
 import flixel.math.FlxPoint;
 import flixel.math.FlxRect;
+import flixel.system.FlxAssets.FlxTilemapGraphicAsset;
+import flixel.tile.FlxTilemap;
 import flixel.util.FlxColor;
 import flixel.util.FlxDestroyUtil;
-import flixel.group.FlxSpriteGroup;
+import flixel.tile.FlxBaseTilemap.FlxTilemapAutoTiling;
 import openfl.Assets;
 
 /**
@@ -40,6 +45,10 @@ class FlxUI9SliceSprite extends FlxUISprite implements IResizable implements IFl
 	private var _smooth:Bool = false;
 	
 	private var _asset_id:String = "";
+	
+	private var _useSubSprites:Bool = false;
+	private var _subSprites:FlxSpriteGroup;
+	private var _subSpriteTiles:Array<FlxTilemap>;
 	
 	private var _raw_pixels:BitmapData;
 	
@@ -78,7 +87,7 @@ class FlxUI9SliceSprite extends FlxUISprite implements IResizable implements IFl
 	 * @param	Color	Color to tint this graphic to.  (White has no effect.)
 	 */
 	
-	public function new(X:Float, Y:Float, Graphic:Dynamic, Rect:Rectangle, Slice9:Array<Int>=null, Tile:Int=TILE_NONE, Smooth:Bool=false, Id:String="",Ratio:Float=-1,Resize_point=null,Resize_axis:Int=FlxUISprite.RESIZE_RATIO_Y,DeferResize:Bool=false,UseSubSprites:Bool=false,Color:FlxColor=FlxColor.WHITE) 
+	public function new(X:Float, Y:Float, Graphic:Dynamic, Rect:Rectangle, Slice9:Array<Int>=null, Tile:Int=TILE_NONE, Smooth:Bool=false, Id:String="",Ratio:Float=-1,Resize_point=null,Resize_axis:Int=FlxUISprite.RESIZE_RATIO_Y,DeferResize:Bool=false,Color:FlxColor=FlxColor.WHITE,UseSubSprites:Bool=false) 
 	{
 		super(X, Y, null);
 		color = Color;
@@ -831,7 +840,7 @@ class FlxUI9SliceSprite extends FlxUISprite implements IResizable implements IFl
 				srcData = U.getBmp(assetId);
 			}
 		}
-
+		
 		src.x = Std.int(src.x);
 		src.y = Std.int(src.y);
 		src.width = Std.int(src.width);
@@ -913,20 +922,20 @@ class FlxUI9SliceSprite extends FlxUISprite implements IResizable implements IFl
 		_staticRect.width = section.width;
 		_staticRect.height = section.height;
 		
-		if (tile & 0x10 == 0) {							//TILE H is false
+		if (tile & 0x10 == 0) {					//TILE H is false
 			_staticMatrix.scale(dst.width / section.width, 1.0);	//scale H
-			_staticRect.width = dst.width;				//_staticRect reflects scaling
+			_staticRect.width = dst.width;							//_staticRect reflects scaling
 		}
-		if (tile & 0x01 == 0) {							//TILE V is false
-			_staticMatrix.scale(1.0, dst.height / section.height);//scale V
-			_staticRect.height = dst.height;			//_staticRect reflects scaling
+		if (tile & 0x01 == 0) {					//TILE V is false
+			_staticMatrix.scale(1.0, dst.height / section.height);	//scale V
+			_staticRect.height = dst.height;						//_staticRect reflects scaling
 		}
 		
 		//draw the first section
 		//if tiling is false, this is all that needs to be done as
 		//the section's h&v will exactly equal the destination size
 		//final_pixels.draw(section, _staticMatrix, null, null, null, smooth);
-				
+		
 		if (section.width == dst.width && section.height == dst.height) {
 			_staticPoint.x = 0;
 			_staticPoint.y = 0;
@@ -1003,4 +1012,3 @@ typedef SectionCounter =
 	var useCount:Int;
 	var subKeys:Array<String>;
 }
-
