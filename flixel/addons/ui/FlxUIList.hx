@@ -136,7 +136,6 @@ class FlxUIList extends FlxUIGroup implements ICursorPointable
 				}
 				prevButton = pButton;
 			}
-			prevButton = pButton;
 		}
 		else
 		{
@@ -172,7 +171,6 @@ class FlxUIList extends FlxUIGroup implements ICursorPointable
 				}
 				nextButton = nButton;
 			}
-			nextButton = nButton;
 		}
 		else
 		{

@@ -1416,7 +1416,6 @@ class FlxUICursor extends FlxUISprite
 					}
 				}
 			}
-			currWidget = _widgets[location];
 		}
 		
 		return location;

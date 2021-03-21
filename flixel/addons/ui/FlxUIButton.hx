@@ -159,11 +159,6 @@ class FlxUIButton extends FlxUITypedButton<FlxUIText> implements ILabeled implem
 		return null;
 	}
 	
-	public override function autoCenterLabel():Void
-	{
-		super.autoCenterLabel();
-	}
-	
 	public override function clone():FlxUIButton
 	{
 		var newButton = new FlxUIButton(x, y, (label == null) ? null : label.text, onUp.callback, false, true);

@@ -151,7 +151,6 @@ class FlxUISubState extends FlxSubState implements IFlxUIState
 		if (Std.is(_parentState, FlxUIState)) {
 			reload_ui_on_resize = cast (_parentState, FlxUIState).reload_ui_on_resize;
 		}
-		return data;
 	}
 	
 	public function onCursorEvent(code:String, target:IFlxUIWidget):Void 
